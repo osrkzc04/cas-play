@@ -1,0 +1,69 @@
+# ==========================
+# DOCUMENTACIÓN ACADÉMICA
+# ==========================
+
+docs/
+diagramas/
+# ==========================
+# VARIABLES DE ENTORNO
+# ==========================
+
+.env
+.env.*
+
+!.env.example
+
+# ==========================
+# PYTHON
+# ==========================
+
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Environment files
+.env
+.env.dev
+.env.prod
+
+# Allow examples
+!.env.example
+
+# ==========================
+# NODE / REACT
+# ==========================
+
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+
+# ==========================
+# DATABASE
+# ==========================
+
+database/backups/
+
+# ==========================
+# LOGS
+# ==========================
+
+*.log
+logs/
+
+# ==========================
+# IDE / EDITORES
+# ==========================
+
+.vscode/
+.idea/
+.claude/
+
+# ==========================
+# SISTEMA OPERATIVO
+# ==========================
+
+.DS_Store
+Thumbs.db
+CLAUDE.md
