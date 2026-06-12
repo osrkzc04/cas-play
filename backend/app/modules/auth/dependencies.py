@@ -10,14 +10,10 @@ from app.shared.dependencies import get_db
 
 
 bearer_scheme = HTTPBearer()
+optional_bearer_scheme = HTTPBearer(auto_error=False)
 
 
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-    db: Session = Depends(get_db),
-) -> User:
-    token = credentials.credentials
-
+def _resolve_user_from_token(token: str, db: Session) -> User:
     try:
         payload = decode_token(token)
     except ValueError as exc:
@@ -41,6 +37,25 @@ def get_current_user(
         raise UnauthorizedException("El usuario se encuentra inactivo")
 
     return user
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db: Session = Depends(get_db),
+) -> User:
+    return _resolve_user_from_token(credentials.credentials, db)
+
+
+def get_optional_current_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(optional_bearer_scheme),
+    db: Session = Depends(get_db),
+) -> User | None:
+    # Permite endpoints accesibles tanto de forma anónima (vista previa)
+    # como autenticada (gestores). Sin credenciales devuelve None.
+    if credentials is None:
+        return None
+
+    return _resolve_user_from_token(credentials.credentials, db)
 
 
 def require_roles(allowed_roles: list[str]):

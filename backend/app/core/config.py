@@ -27,6 +27,13 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 
+    # Raíz de almacenamiento local de archivos (videos y materiales).
+    # En despliegue se monta como volumen persistente (ADR-008).
+    # Coincide con la convención de .gitignore: backend/storage/{videos,materials}.
+    MEDIA_ROOT: str = "storage"
+    MAX_VIDEO_SIZE_MB: int = 500
+    MAX_MATERIAL_SIZE_MB: int = 25
+
     FIRST_ADMIN_EMAIL: str = "admin@casplay.com"
     FIRST_ADMIN_PASSWORD: str = "Admin12345"
     FIRST_ADMIN_FIRST_NAME: str = "Admin"

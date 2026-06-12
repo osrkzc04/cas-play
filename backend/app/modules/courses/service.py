@@ -18,6 +18,15 @@ from app.shared.pagination import PaginatedResponse
 
 
 class CourseService:
+    # Transiciones de estado permitidas. FINISHED es terminal: un curso
+    # finalizado no se republica para preservar la integridad de certificados.
+    _ALLOWED_STATUS_TRANSITIONS: dict[CourseStatus, set[CourseStatus]] = {
+        CourseStatus.DRAFT: {CourseStatus.PUBLISHED},
+        CourseStatus.PUBLISHED: {CourseStatus.HIDDEN, CourseStatus.FINISHED},
+        CourseStatus.HIDDEN: {CourseStatus.PUBLISHED, CourseStatus.FINISHED},
+        CourseStatus.FINISHED: set(),
+    }
+
     def __init__(self, db: Session):
         self.course_repository = CourseRepository(db)
         self.user_repository = UserRepository(db)
@@ -97,6 +106,13 @@ class CourseService:
 
         return self.course_repository.save(course)
 
+    def get_managed_course(
+        self,
+        course_id: uuid.UUID,
+        current_user: User,
+    ) -> Course:
+        return self._get_owned_or_admin(course_id, current_user)
+
     def _change_status(
         self,
         course_id: uuid.UUID,
@@ -107,6 +123,11 @@ class CourseService:
 
         if course.status == new_status:
             raise BadRequestException("El curso ya se encuentra en ese estado")
+
+        if new_status not in self._ALLOWED_STATUS_TRANSITIONS[course.status]:
+            raise BadRequestException(
+                "La transición de estado solicitada no es válida para este curso"
+            )
 
         course.status = new_status
         return self.course_repository.save(course)

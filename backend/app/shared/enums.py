@@ -14,6 +14,12 @@ class CourseStatus(str, Enum):
     FINISHED = "FINISHED"
 
 
+class MaterialType(str, Enum):
+    PDF = "PDF"
+    IMAGE = "IMAGE"
+    OFFICE = "OFFICE"
+
+
 class QuestionType(str, Enum):
     MULTIPLE_CHOICE = "MULTIPLE_CHOICE"
     TRUE_FALSE = "TRUE_FALSE"

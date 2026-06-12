@@ -70,6 +70,19 @@ def list_managed_courses(
 
 
 @router.get(
+    "/{course_id}/manage",
+    response_model=CourseResponse,
+)
+def get_managed_course(
+    course_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_course_manager),
+):
+    service = CourseService(db)
+    return service.get_managed_course(course_id, current_user)
+
+
+@router.get(
     "/{course_id}",
     response_model=CourseResponse,
 )
