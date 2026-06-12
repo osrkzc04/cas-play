@@ -27,6 +27,11 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
 
+    FIRST_ADMIN_EMAIL: str = "admin@casplay.com"
+    FIRST_ADMIN_PASSWORD: str = "Admin12345"
+    FIRST_ADMIN_FIRST_NAME: str = "Admin"
+    FIRST_ADMIN_LAST_NAME: str = "CAS"
+
     model_config = SettingsConfigDict(
         env_file="../.env.dev",
         env_file_encoding="utf-8",

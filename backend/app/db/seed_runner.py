@@ -1,4 +1,4 @@
-from app.db.seed import seed_roles
+from app.db.seed import seed_admin, seed_roles
 from app.db.session import SessionLocal
 
 
@@ -7,6 +7,7 @@ def run_seed() -> None:
 
     try:
         seed_roles(db)
+        seed_admin(db)
         print("Seed completed successfully.")
     finally:
         db.close()

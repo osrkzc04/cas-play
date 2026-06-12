@@ -11,7 +11,7 @@ from app.modules.users.schemas import (
     UserUpdate,
 )
 from app.modules.users.service import RoleService, UserService
-from app.modules.auth.dependencies import require_roles
+from app.modules.users.dependencies import require_admin
 from app.shared.dependencies import get_db
 
 
@@ -25,7 +25,10 @@ router = APIRouter(
     "/roles",
     response_model=list[RoleResponse],
 )
-def get_roles(db: Session = Depends(get_db)):
+def get_roles(
+    db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
+):
     service = RoleService(db)
     return service.get_roles()
 
@@ -38,6 +41,7 @@ def get_roles(db: Session = Depends(get_db)):
 def create_role(
     role_data: RoleCreate,
     db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
 ):
     service = RoleService(db)
     return service.create_role(role_data)
@@ -51,6 +55,7 @@ def get_users(
     skip: int = 0,
     limit: int = 10,
     db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
 ):
     service = UserService(db)
     return service.get_users(skip=skip, limit=limit)
@@ -64,8 +69,7 @@ def get_users(
 def create_user(
     user_data: UserCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(require_roles(["ADMIN"])),
-
+    current_user=Depends(require_admin),
 ):
     service = UserService(db)
     return service.create_user(user_data)
@@ -78,6 +82,7 @@ def create_user(
 def get_user_by_id(
     user_id: uuid.UUID,
     db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
 ):
     service = UserService(db)
     return service.get_user_by_id(user_id)
@@ -91,6 +96,7 @@ def update_user(
     user_id: uuid.UUID,
     user_data: UserUpdate,
     db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
 ):
     service = UserService(db)
     return service.update_user(user_id, user_data)
