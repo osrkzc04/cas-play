@@ -2,16 +2,22 @@
 # DOCUMENTACIÓN ACADÉMICA
 # ==========================
 
-docs/
+tesis/
 diagramas/
+templates/
+
 # ==========================
 # VARIABLES DE ENTORNO
 # ==========================
 
 .env
 .env.*
-
 !.env.example
+
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
 
 # ==========================
 # PYTHON
@@ -19,31 +25,50 @@ diagramas/
 
 __pycache__/
 *.py[cod]
-*.pyo
-*.pyd
 
-# Environment files
-.env
-.env.dev
-.env.prod
+.venv/
+venv/
+env/
 
-# Allow examples
-!.env.example
+backend/.venv/
+backend/venv/
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.coverage
+htmlcov/
 
 # ==========================
-# NODE / REACT
+# STORAGE
+# ==========================
+
+backend/storage/videos/
+backend/storage/materials/
+backend/storage/certificates/
+
+# ==========================
+# NODE
 # ==========================
 
 node_modules/
 frontend/node_modules/
+
 frontend/dist/
 frontend/build/
+frontend/.vite/
+
+*.tsbuildinfo
 
 # ==========================
 # DATABASE
 # ==========================
 
 database/backups/
+database/dumps/
+
+*.backup
 
 # ==========================
 # LOGS
@@ -53,7 +78,7 @@ database/backups/
 logs/
 
 # ==========================
-# IDE / EDITORES
+# IDE
 # ==========================
 
 .vscode/
@@ -61,9 +86,32 @@ logs/
 .claude/
 
 # ==========================
-# SISTEMA OPERATIVO
+# WORD TEMP FILES
+# ==========================
+
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# ==========================
+# SISTEMA
 # ==========================
 
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# ==========================
+# DOCUMENTACIÓN INTERNA
+# ==========================
+
 CLAUDE.md
+backend/CLAUDE.md
+frontend/CLAUDE.md
+
+docs/ROADMAP.md
+docs/DECISIONS.md
+docs/DATABASE.md
+docs/BUSINESS_RULES.md
+docs/MODULES.md
+docs/API_SPEC.md

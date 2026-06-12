@@ -11,6 +11,7 @@ from app.modules.users.schemas import (
     UserUpdate,
 )
 from app.modules.users.service import RoleService, UserService
+from app.modules.auth.dependencies import require_roles
 from app.shared.dependencies import get_db
 
 
@@ -63,6 +64,8 @@ def get_users(
 def create_user(
     user_data: UserCreate,
     db: Session = Depends(get_db),
+    current_user=Depends(require_roles(["ADMIN"])),
+
 ):
     service = UserService(db)
     return service.create_user(user_data)
