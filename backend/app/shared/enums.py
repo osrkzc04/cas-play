@@ -25,6 +25,11 @@ class QuestionType(str, Enum):
     TRUE_FALSE = "TRUE_FALSE"
 
 
+class AttemptStatus(str, Enum):
+    IN_PROGRESS = "IN_PROGRESS"
+    SUBMITTED = "SUBMITTED"
+
+
 class AuditAction(str, Enum):
     LOGIN = "LOGIN"
     COURSE_CREATED = "COURSE_CREATED"
