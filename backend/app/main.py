@@ -6,6 +6,7 @@ from app.db.session import engine
 from app.modules.auth.router import router as auth_router
 from app.modules.course_modules.router import router as modules_router
 from app.modules.courses.router import router as courses_router
+from app.modules.enrollments.router import router as enrollments_router
 from app.modules.lessons.router import router as lessons_router
 from app.modules.materials.router import router as materials_router
 from app.modules.users.router import router as users_router
@@ -43,6 +44,11 @@ app.include_router(
 
 app.include_router(
     materials_router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+app.include_router(
+    enrollments_router,
     prefix=settings.API_V1_PREFIX,
 )
 
