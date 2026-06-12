@@ -9,6 +9,7 @@ from app.modules.courses.router import router as courses_router
 from app.modules.enrollments.router import router as enrollments_router
 from app.modules.lessons.router import router as lessons_router
 from app.modules.materials.router import router as materials_router
+from app.modules.progress.router import router as progress_router
 from app.modules.users.router import router as users_router
 
 
@@ -52,6 +53,10 @@ app.include_router(
     prefix=settings.API_V1_PREFIX,
 )
 
+app.include_router(
+    progress_router,
+    prefix=settings.API_V1_PREFIX,
+)
 
 
 @app.get(f"{settings.API_V1_PREFIX}/health")

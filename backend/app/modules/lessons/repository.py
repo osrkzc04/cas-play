@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.modules.course_modules.models import Module
 from app.modules.lessons.models import Lesson
 
 
@@ -13,6 +14,15 @@ class LessonRepository:
     def get_by_id(self, lesson_id: uuid.UUID) -> Lesson | None:
         statement = select(Lesson).where(Lesson.id == lesson_id)
         return self.db.scalar(statement)
+
+    def count_by_course(self, course_id: uuid.UUID) -> int:
+        statement = (
+            select(func.count())
+            .select_from(Lesson)
+            .join(Module, Module.id == Lesson.module_id)
+            .where(Module.course_id == course_id)
+        )
+        return self.db.scalar(statement) or 0
 
     def list_by_module(self, module_id: uuid.UUID) -> list[Lesson]:
         statement = (
