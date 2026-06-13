@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     MAX_VIDEO_SIZE_MB: int = 500
     MAX_MATERIAL_SIZE_MB: int = 25
 
+    # Base pública del servidor; el QR de los certificados codifica la URL de
+    # validación pública apuntando a esta raíz (BR-030).
+    PUBLIC_BASE_URL: str = "http://localhost:8000"
+
     FIRST_ADMIN_EMAIL: str = "admin@casplay.com"
     FIRST_ADMIN_PASSWORD: str = "Admin12345"
     FIRST_ADMIN_FIRST_NAME: str = "Admin"
