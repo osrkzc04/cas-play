@@ -12,6 +12,7 @@ from app.modules.enrollments.router import router as enrollments_router
 from app.modules.evaluations.router import router as evaluations_router
 from app.modules.lessons.router import router as lessons_router
 from app.modules.materials.router import router as materials_router
+from app.modules.metrics.router import router as metrics_router
 from app.modules.progress.router import router as progress_router
 from app.modules.ratings.router import router as ratings_router
 from app.modules.users.router import router as users_router
@@ -79,6 +80,11 @@ app.include_router(
 
 app.include_router(
     audit_router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+app.include_router(
+    metrics_router,
     prefix=settings.API_V1_PREFIX,
 )
 
