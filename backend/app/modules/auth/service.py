@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.core.exceptions import BadRequestException, UnauthorizedException
 from app.core.jwt import create_access_token, create_refresh_token, decode_token
 from app.core.security import get_password_hash, verify_password
+from app.modules.audit.service import AuditService
 from app.modules.auth.repository import (
     PasswordResetTokenRepository,
     RefreshTokenRepository,
@@ -14,6 +15,7 @@ from app.modules.auth.repository import (
 from app.modules.auth.schemas import LoginRequest, PasswordResetConfirm
 from app.modules.users.models import User
 from app.modules.users.repository import UserRepository
+from app.shared.enums import AuditAction
 
 
 class AuthService:
@@ -22,17 +24,37 @@ class AuthService:
         self.user_repository = UserRepository(db)
         self.refresh_token_repository = RefreshTokenRepository(db)
         self.password_reset_token_repository = PasswordResetTokenRepository(db)
+        self.audit = AuditService(db)
 
     def login(self, login_data: LoginRequest) -> dict[str, str]:
         user = self.user_repository.get_by_email(login_data.email)
 
         if user is None:
+            self.audit.record(
+                action=AuditAction.LOGIN_FAILED,
+                entity_type="user",
+                details={"email": login_data.email, "reason": "user_not_found"},
+            )
             raise UnauthorizedException("Correo o contraseña incorrectos")
 
         if not verify_password(login_data.password, user.password_hash):
+            self.audit.record(
+                action=AuditAction.LOGIN_FAILED,
+                actor_id=user.id,
+                entity_type="user",
+                entity_id=user.id,
+                details={"email": login_data.email, "reason": "invalid_password"},
+            )
             raise UnauthorizedException("Correo o contraseña incorrectos")
 
         if not user.is_active:
+            self.audit.record(
+                action=AuditAction.LOGIN_FAILED,
+                actor_id=user.id,
+                entity_type="user",
+                entity_id=user.id,
+                details={"email": login_data.email, "reason": "inactive"},
+            )
             raise UnauthorizedException("El usuario se encuentra inactivo")
 
         access_token = create_access_token(
@@ -49,6 +71,14 @@ class AuthService:
             user_id=user.id,
             token=refresh_token,
             expires_at=expires_at,
+        )
+
+        self.audit.record(
+            action=AuditAction.LOGIN,
+            actor_id=user.id,
+            entity_type="user",
+            entity_id=user.id,
+            details={"email": user.email},
         )
 
         return {
@@ -146,3 +176,10 @@ class AuthService:
         self.password_reset_token_repository.mark_as_used(stored_token)
 
         self.refresh_token_repository.revoke_all_by_user_id(user.id)
+
+        self.audit.record(
+            action=AuditAction.PASSWORD_CHANGED,
+            actor_id=user.id,
+            entity_type="user",
+            entity_id=user.id,
+        )

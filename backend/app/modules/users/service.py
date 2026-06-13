@@ -4,9 +4,11 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import ConflictException, NotFoundException
 from app.core.security import get_password_hash
+from app.modules.audit.service import AuditService
 from app.modules.users.models import Role, User
 from app.modules.users.repository import RoleRepository, UserRepository
 from app.modules.users.schemas import RoleCreate, UserCreate, UserUpdate
+from app.shared.enums import AuditAction
 
 
 class RoleService:
@@ -37,6 +39,7 @@ class UserService:
     def __init__(self, db: Session):
         self.user_repository = UserRepository(db)
         self.role_repository = RoleRepository(db)
+        self.audit = AuditService(db)
 
     def get_users(self, skip: int = 0, limit: int = 10) -> list[User]:
         return self.user_repository.get_all(skip=skip, limit=limit)
@@ -69,7 +72,12 @@ class UserService:
             password_hash=password_hash,
         )
 
-    def update_user(self, user_id: uuid.UUID, user_data: UserUpdate) -> User:
+    def update_user(
+        self,
+        user_id: uuid.UUID,
+        user_data: UserUpdate,
+        actor: User | None = None,
+    ) -> User:
         user = self.get_user_by_id(user_id)
 
         if user_data.email and user_data.email != user.email:
@@ -86,4 +94,16 @@ class UserService:
             if role is None:
                 raise NotFoundException("Rol no encontrado")
 
-        return self.user_repository.update(user, user_data)
+        updated_user = self.user_repository.update(user, user_data)
+
+        self.audit.record(
+            action=AuditAction.USER_UPDATED,
+            actor_id=actor.id if actor else None,
+            entity_type="user",
+            entity_id=updated_user.id,
+            details=user_data.model_dump(
+                mode="json", exclude_unset=True, exclude={"password"}
+            ),
+        )
+
+        return updated_user

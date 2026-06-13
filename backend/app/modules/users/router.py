@@ -99,4 +99,4 @@ def update_user(
     current_user=Depends(require_admin),
 ):
     service = UserService(db)
-    return service.update_user(user_id, user_data)
+    return service.update_user(user_id, user_data, actor=current_user)

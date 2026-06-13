@@ -11,6 +11,7 @@ from app.core.exceptions import (
     ForbiddenException,
     NotFoundException,
 )
+from app.modules.audit.service import AuditService
 from app.modules.certificates import generator
 from app.modules.certificates.models import Certificate
 from app.modules.certificates.repository import CertificateRepository
@@ -26,6 +27,7 @@ from app.modules.evaluations.repository import AttemptRepository, EvaluationRepo
 from app.modules.lessons.repository import LessonRepository
 from app.modules.progress.repository import ProgressRepository
 from app.modules.users.models import User
+from app.shared.enums import AuditAction
 from app.shared.pagination import PaginatedResponse
 
 
@@ -53,6 +55,7 @@ class CertificateService:
         self.progress_repository = ProgressRepository(db)
         self.evaluation_repository = EvaluationRepository(db)
         self.attempt_repository = AttemptRepository(db)
+        self.audit = AuditService(db)
 
     # ------------------------------------------------------------------ #
     # Elegibilidad (BR-026, BR-027)
@@ -229,6 +232,14 @@ class CertificateService:
             issued_at=issued_at,
         )
         certificate = self.certificate_repository.save(certificate)
+
+        self.audit.record(
+            action=AuditAction.CERTIFICATE_ISSUED,
+            actor_id=current_user.id,
+            entity_type="certificate",
+            entity_id=certificate.id,
+            details={"code": certificate.code, "course_id": str(course_id)},
+        )
 
         return self._to_response(certificate)
 

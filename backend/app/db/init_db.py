@@ -4,6 +4,7 @@
 # Ejemplo futuro:
 # from app.modules.users.models import User, Role
 
+from app.modules.audit.models import AuditLog  # noqa: F401
 from app.modules.auth.models import PasswordResetToken, RefreshToken  # noqa: F401
 from app.modules.certificates.models import Certificate  # noqa: F401
 from app.modules.course_modules.models import Module  # noqa: F401

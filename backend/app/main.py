@@ -3,6 +3,7 @@ from sqlalchemy import text
 
 from app.core.config import settings
 from app.db.session import engine
+from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
 from app.modules.certificates.router import router as certificates_router
 from app.modules.course_modules.router import router as modules_router
@@ -73,6 +74,11 @@ app.include_router(
 
 app.include_router(
     ratings_router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+app.include_router(
+    audit_router,
     prefix=settings.API_V1_PREFIX,
 )
 

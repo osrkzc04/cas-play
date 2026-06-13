@@ -8,12 +8,13 @@ from app.core.exceptions import (
     ForbiddenException,
     NotFoundException,
 )
+from app.modules.audit.service import AuditService
 from app.modules.courses.models import Course
 from app.modules.courses.repository import CourseRepository
 from app.modules.courses.schemas import CourseCreate, CourseUpdate
 from app.modules.users.models import User
 from app.modules.users.repository import UserRepository
-from app.shared.enums import CourseStatus, RoleName
+from app.shared.enums import AuditAction, CourseStatus, RoleName
 from app.shared.pagination import PaginatedResponse
 
 
@@ -30,6 +31,7 @@ class CourseService:
     def __init__(self, db: Session):
         self.course_repository = CourseRepository(db)
         self.user_repository = UserRepository(db)
+        self.audit = AuditService(db)
 
     def _is_admin(self, user: User) -> bool:
         return user.role.name == RoleName.ADMIN.value
@@ -67,11 +69,21 @@ class CourseService:
             # El INSTRUCTOR siempre crea cursos a su propio nombre.
             instructor_id = current_user.id
 
-        return self.course_repository.create(
+        course = self.course_repository.create(
             instructor_id=instructor_id,
             title=course_data.title,
             description=course_data.description,
         )
+
+        self.audit.record(
+            action=AuditAction.COURSE_CREATED,
+            actor_id=current_user.id,
+            entity_type="course",
+            entity_id=course.id,
+            details={"title": course.title},
+        )
+
+        return course
 
     def get_public_course(self, course_id: uuid.UUID) -> Course:
         course = self.course_repository.get_by_id(course_id)
@@ -133,10 +145,30 @@ class CourseService:
         return self.course_repository.save(course)
 
     def publish_course(self, course_id: uuid.UUID, current_user: User) -> Course:
-        return self._change_status(course_id, CourseStatus.PUBLISHED, current_user)
+        course = self._change_status(course_id, CourseStatus.PUBLISHED, current_user)
+
+        self.audit.record(
+            action=AuditAction.COURSE_PUBLISHED,
+            actor_id=current_user.id,
+            entity_type="course",
+            entity_id=course.id,
+            details={"title": course.title},
+        )
+
+        return course
 
     def hide_course(self, course_id: uuid.UUID, current_user: User) -> Course:
-        return self._change_status(course_id, CourseStatus.HIDDEN, current_user)
+        course = self._change_status(course_id, CourseStatus.HIDDEN, current_user)
+
+        self.audit.record(
+            action=AuditAction.COURSE_HIDDEN,
+            actor_id=current_user.id,
+            entity_type="course",
+            entity_id=course.id,
+            details={"title": course.title},
+        )
+
+        return course
 
     def finish_course(self, course_id: uuid.UUID, current_user: User) -> Course:
         return self._change_status(course_id, CourseStatus.FINISHED, current_user)
