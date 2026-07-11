@@ -1,4 +1,4 @@
-from fastapi import Depends
+from fastapi import Depends, Query
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -56,6 +56,22 @@ def get_optional_current_user(
         return None
 
     return _resolve_user_from_token(credentials.credentials, db)
+
+
+def get_optional_current_user_streaming(
+    credentials: HTTPAuthorizationCredentials | None = Depends(optional_bearer_scheme),
+    token: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+) -> User | None:
+    # El elemento <video> nativo no envía el header Authorization, por lo que el
+    # streaming autenticado admite además el token por query param. La cabecera
+    # tiene prioridad cuando ambos están presentes.
+    raw_token = credentials.credentials if credentials is not None else token
+
+    if raw_token is None:
+        return None
+
+    return _resolve_user_from_token(raw_token, db)
 
 
 def require_roles(allowed_roles: list[str]):

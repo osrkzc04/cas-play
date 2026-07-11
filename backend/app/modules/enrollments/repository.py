@@ -67,3 +67,33 @@ class EnrollmentRepository:
             .where(Enrollment.user_id == user_id)
         )
         return self.db.scalar(statement) or 0
+
+    def list_all(
+        self,
+        skip: int,
+        limit: int,
+        course_id: uuid.UUID | None = None,
+    ) -> list[Enrollment]:
+        statement = (
+            select(Enrollment)
+            .options(
+                joinedload(Enrollment.student),
+                joinedload(Enrollment.course),
+            )
+            .order_by(Enrollment.created_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+
+        if course_id is not None:
+            statement = statement.where(Enrollment.course_id == course_id)
+
+        return list(self.db.scalars(statement).all())
+
+    def count_all(self, course_id: uuid.UUID | None = None) -> int:
+        statement = select(func.count()).select_from(Enrollment)
+
+        if course_id is not None:
+            statement = statement.where(Enrollment.course_id == course_id)
+
+        return self.db.scalar(statement) or 0

@@ -1,8 +1,11 @@
 import math
 import uuid
+from pathlib import Path
 
+from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.exceptions import (
     BadRequestException,
     ForbiddenException,
@@ -16,6 +19,9 @@ from app.modules.users.models import User
 from app.modules.users.repository import UserRepository
 from app.shared.enums import AuditAction, CourseStatus, RoleName
 from app.shared.pagination import PaginatedResponse
+from app.shared.storage import delete_file, save_upload
+
+ALLOWED_COVER_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 
 class CourseService:
@@ -72,7 +78,12 @@ class CourseService:
         course = self.course_repository.create(
             instructor_id=instructor_id,
             title=course_data.title,
+            summary=course_data.summary,
             description=course_data.description,
+            level=course_data.level,
+            duration_hours=course_data.duration_hours,
+            requirements=course_data.requirements,
+            target_audience=course_data.target_audience,
         )
 
         self.audit.record(
@@ -101,11 +112,20 @@ class CourseService:
     ) -> Course:
         course = self._get_owned_or_admin(course_id, current_user)
 
-        if course_data.title is not None:
-            course.title = course_data.title
-
-        if course_data.description is not None:
-            course.description = course_data.description
+        # Campos informativos: solo se actualizan los enviados (None = sin cambio).
+        updatable_fields = (
+            "title",
+            "summary",
+            "description",
+            "level",
+            "duration_hours",
+            "requirements",
+            "target_audience",
+        )
+        for field in updatable_fields:
+            value = getattr(course_data, field)
+            if value is not None:
+                setattr(course, field, value)
 
         if course_data.instructor_id is not None:
             # Solo ADMIN puede reasignar el instructor de un curso.
@@ -124,6 +144,70 @@ class CourseService:
         current_user: User,
     ) -> Course:
         return self._get_owned_or_admin(course_id, current_user)
+
+    def set_cover(
+        self,
+        course_id: uuid.UUID,
+        upload: UploadFile,
+        current_user: User,
+    ) -> Course:
+        course = self._get_owned_or_admin(course_id, current_user)
+
+        extension = Path(upload.filename or "").suffix.lower()
+        if extension not in ALLOWED_COVER_EXTENSIONS:
+            raise BadRequestException("Formato de imagen no permitido")
+
+        previous_path = course.cover_image_path
+        course.cover_image_path = save_upload(
+            upload,
+            subdir="covers",
+            max_bytes=settings.MAX_COVER_SIZE_MB * 1024 * 1024,
+        )
+        saved = self.course_repository.save(course)
+
+        # Se elimina la portada anterior solo tras persistir la nueva.
+        if previous_path:
+            delete_file(previous_path)
+
+        return saved
+
+    def delete_cover(
+        self,
+        course_id: uuid.UUID,
+        current_user: User,
+    ) -> Course:
+        course = self._get_owned_or_admin(course_id, current_user)
+
+        if course.cover_image_path is None:
+            raise BadRequestException("El curso no tiene una portada asignada")
+
+        previous_path = course.cover_image_path
+        course.cover_image_path = None
+        saved = self.course_repository.save(course)
+        delete_file(previous_path)
+
+        return saved
+
+    def get_cover_path(self, course_id: uuid.UUID) -> str:
+        course = self.course_repository.get_by_id(course_id)
+
+        if course is None or course.cover_image_path is None:
+            raise NotFoundException("Portada no encontrada")
+
+        return course.cover_image_path
+
+    def user_manages_course(
+        self,
+        course_id: uuid.UUID,
+        current_user: User,
+    ) -> bool:
+        # Verificación sin excepciones para decidir acceso (gestor vs. estudiante).
+        course = self.course_repository.get_by_id(course_id)
+
+        if course is None:
+            return False
+
+        return self._is_admin(current_user) or course.instructor_id == current_user.id
 
     def _change_status(
         self,

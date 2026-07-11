@@ -1,9 +1,19 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  EyeOff,
+  Flag,
+  Layers,
+  Pencil,
+  Send,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Alert } from "@/shared/components/Alert";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
+import { DropdownMenu } from "@/shared/components/DropdownMenu";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { PageLoader } from "@/shared/components/PageLoader";
 import { Pagination } from "@/shared/components/Pagination";
@@ -19,6 +29,12 @@ import {
 import type { CourseStatus, CourseStatusAction } from "../types";
 
 const PAGE_SIZE = 10;
+
+const statusActionIcons: Record<CourseStatusAction, LucideIcon> = {
+  publish: Send,
+  hide: EyeOff,
+  finish: Flag,
+};
 
 const actionsByStatus: Record<
   CourseStatus,
@@ -56,10 +72,10 @@ export function ManageCoursesPage() {
     <section className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-gray-900">
             Gestión de cursos
           </h1>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-gray-500">
             Crea, edita y administra el estado de tus cursos.
           </p>
         </div>
@@ -94,54 +110,68 @@ export function ManageCoursesPage() {
       )}
 
       {data && data.items.length > 0 && (
-        <Card className="overflow-x-auto">
+        <Card className="overflow-x-auto p-0">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-200 text-xs uppercase text-slate-500">
+            <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
               <tr>
-                <th className="px-4 py-3">Título</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3">Actualizado</th>
-                <th className="px-4 py-3 text-right">Acciones</th>
+                <th className="px-4 py-3 font-semibold">Título</th>
+                <th className="px-4 py-3 font-semibold">Estado</th>
+                <th className="px-4 py-3 font-semibold">Actualizado</th>
+                <th className="px-4 py-3 text-right font-semibold">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-gray-100">
               {data.items.map((course) => (
-                <tr key={course.id}>
-                  <td className="px-4 py-3 font-medium text-slate-800">
+                <tr
+                  key={course.id}
+                  className="transition-colors hover:bg-gray-50"
+                >
+                  <td className="px-4 py-3 font-medium text-gray-800">
                     {course.title}
                   </td>
                   <td className="px-4 py-3">
                     <CourseStatusBadge status={course.status} />
                   </td>
-                  <td className="px-4 py-3 text-slate-500">
+                  <td className="px-4 py-3 text-gray-500">
                     {formatDate(course.updated_at)}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex flex-wrap justify-end gap-2">
-                      <Link to={`/dashboard/courses/${course.id}/edit`}>
-                        <Button variant="outline" size="sm">
-                          Editar
-                        </Button>
-                      </Link>
-                      {actionsByStatus[course.status].map(
-                        ({ action, label }) => (
-                          <Button
-                            key={action}
-                            variant="secondary"
-                            size="sm"
-                            isLoading={
-                              statusMutation.isPending &&
-                              statusMutation.variables?.id === course.id &&
-                              statusMutation.variables?.action === action
-                            }
-                            onClick={() =>
-                              statusMutation.mutate({ id: course.id, action })
-                            }
-                          >
-                            {label}
-                          </Button>
-                        ),
-                      )}
+                    <div className="flex justify-end">
+                      <DropdownMenu
+                        items={[
+                          {
+                            key: "content",
+                            label: "Contenido",
+                            icon: Layers,
+                            to: `/dashboard/courses/${course.id}/content`,
+                          },
+                          {
+                            key: "students",
+                            label: "Estudiantes",
+                            icon: Users,
+                            to: `/dashboard/courses/${course.id}/students`,
+                          },
+                          {
+                            key: "edit",
+                            label: "Editar",
+                            icon: Pencil,
+                            to: `/dashboard/courses/${course.id}/edit`,
+                          },
+                          ...actionsByStatus[course.status].map(
+                            ({ action, label }) => ({
+                              key: action,
+                              label,
+                              icon: statusActionIcons[action],
+                              loading:
+                                statusMutation.isPending &&
+                                statusMutation.variables?.id === course.id &&
+                                statusMutation.variables?.action === action,
+                              onSelect: () =>
+                                statusMutation.mutate({ id: course.id, action }),
+                            }),
+                          ),
+                        ]}
+                      />
                     </div>
                   </td>
                 </tr>

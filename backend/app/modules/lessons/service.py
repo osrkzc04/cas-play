@@ -7,13 +7,17 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.exceptions import (
     BadRequestException,
+    ForbiddenException,
     NotFoundException,
     UnauthorizedException,
 )
+from app.modules.course_modules.repository import ModuleRepository
 from app.modules.course_modules.service import ModuleService
+from app.modules.enrollments.repository import EnrollmentRepository
 from app.modules.lessons.models import Lesson
 from app.modules.lessons.repository import LessonRepository
 from app.modules.lessons.schemas import LessonCreate, LessonUpdate
+from app.modules.materials.repository import MaterialRepository
 from app.modules.users.models import User
 from app.shared.storage import delete_file, save_upload
 
@@ -23,6 +27,9 @@ ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".webm", ".mov", ".m4v", ".ogg"}
 class LessonService:
     def __init__(self, db: Session):
         self.lesson_repository = LessonRepository(db)
+        self.module_repository = ModuleRepository(db)
+        self.enrollment_repository = EnrollmentRepository(db)
+        self.material_repository = MaterialRepository(db)
         # Reutiliza el control de propiedad/rol de módulos (y de cursos).
         self.module_service = ModuleService(db)
 
@@ -63,16 +70,29 @@ class LessonService:
         if lesson is None:
             raise NotFoundException("Clase no encontrada")
 
-        # Las clases de vista previa son públicas; el resto exige ser gestor
-        # del curso. El acceso de estudiantes matriculados llega en Sprint 4.
+        # Las clases de vista previa son públicas (BR-011).
         if lesson.is_preview:
             return lesson
 
         if current_user is None:
             raise UnauthorizedException("Autenticación requerida")
 
-        self._assert_module_managed(lesson.module_id, current_user)
-        return lesson
+        module = self.module_repository.get_by_id(lesson.module_id)
+        if module is None:
+            raise NotFoundException("Clase no encontrada")
+
+        # El contenido completo es accesible para los gestores del curso
+        # (ADMIN o instructor propietario) y para estudiantes matriculados (BR-016).
+        manages = self.module_service.course_service.user_manages_course(
+            module.course_id,
+            current_user,
+        )
+        if manages or self.enrollment_repository.exists(
+            current_user.id, module.course_id
+        ):
+            return lesson
+
+        raise ForbiddenException("No se encuentra matriculado en este curso")
 
     def create_lesson(
         self,
@@ -97,7 +117,15 @@ class LessonService:
         current_user: User,
     ) -> list[Lesson]:
         self._assert_module_managed(module_id, current_user)
-        return self.lesson_repository.list_by_module(module_id)
+
+        lessons = self.lesson_repository.list_by_module(module_id)
+        counts = self.material_repository.count_by_module(module_id)
+        # Atributo transitorio leído por el schema (from_attributes) para el
+        # indicador de materiales en el builder.
+        for lesson in lessons:
+            lesson.material_count = counts.get(lesson.id, 0)
+
+        return lessons
 
     def update_lesson(
         self,

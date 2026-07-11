@@ -26,10 +26,10 @@ export function PasswordResetRequestPage() {
 
   return (
     <Card className="p-8">
-      <h1 className="mb-1 text-2xl font-bold text-slate-900">
+      <h1 className="mb-1 text-2xl font-bold text-gray-900">
         Recuperar contraseña
       </h1>
-      <p className="mb-6 text-sm text-slate-500">
+      <p className="mb-6 text-sm text-gray-500">
         Te enviaremos las instrucciones para restablecer tu contraseña.
       </p>
 

@@ -17,10 +17,6 @@ const baseUserSchema = {
 
 export const createUserSchema = z.object({
   ...baseUserSchema,
-  password: z
-    .string()
-    .min(8, "La contraseña debe tener al menos 8 caracteres")
-    .max(128, "La contraseña no puede superar 128 caracteres"),
 });
 
 export type CreateUserFormValues = z.infer<typeof createUserSchema>;

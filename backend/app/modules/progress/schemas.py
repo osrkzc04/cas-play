@@ -24,4 +24,6 @@ class CourseProgressResponse(BaseModel):
     total_lessons: int
     completed_lessons: int
     percentage: float
+    # Última clase con actividad; permite reanudar el curso donde se dejó.
+    last_lesson_id: uuid.UUID | None = None
     lessons: list[LessonProgressResponse]

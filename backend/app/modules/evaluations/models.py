@@ -24,14 +24,14 @@ from app.shared.enums import AttemptStatus, QuestionType
 class Evaluation(Base, BaseModel):
     __tablename__ = "evaluations"
 
-    # Cada módulo tiene una única evaluación (BR-020).
+    # Cada curso tiene una única evaluación final (BR-020).
     __table_args__ = (
-        UniqueConstraint("module_id", name="uq_evaluation_module"),
+        UniqueConstraint("course_id", name="uq_evaluation_course"),
     )
 
-    module_id: Mapped[uuid.UUID] = mapped_column(
+    course_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("modules.id", ondelete="CASCADE"),
+        ForeignKey("courses.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )

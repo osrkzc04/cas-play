@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.core.config import settings
@@ -7,7 +8,9 @@ from app.modules.audit.router import router as audit_router
 from app.modules.auth.router import router as auth_router
 from app.modules.certificates.router import router as certificates_router
 from app.modules.course_modules.router import router as modules_router
+from app.modules.course_topics.router import router as course_topics_router
 from app.modules.courses.router import router as courses_router
+from app.modules.curriculum.router import router as curriculum_router
 from app.modules.enrollments.router import router as enrollments_router
 from app.modules.evaluations.router import router as evaluations_router
 from app.modules.lessons.router import router as lessons_router
@@ -20,6 +23,16 @@ from app.modules.users.router import router as users_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
+)
+
+# El frontend (SPA) corre en otro origen, por lo que el navegador exige CORS
+# para llamar a la API. Orígenes permitidos definidos en settings.CORS_ORIGINS.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -40,6 +53,16 @@ app.include_router(
 
 app.include_router(
     modules_router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+app.include_router(
+    course_topics_router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+app.include_router(
+    curriculum_router,
     prefix=settings.API_V1_PREFIX,
 )
 

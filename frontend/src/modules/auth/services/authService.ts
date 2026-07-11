@@ -9,6 +9,11 @@ interface MessageResponse {
   message: string;
 }
 
+interface ChangePasswordPayload {
+  current_password: string;
+  new_password: string;
+}
+
 export const authService = {
   async requestPasswordReset(
     payload: PasswordResetRequestValues,
@@ -25,6 +30,16 @@ export const authService = {
   ): Promise<MessageResponse> {
     const { data } = await axiosClient.post<MessageResponse>(
       endpoints.auth.passwordResetConfirm,
+      payload,
+    );
+    return data;
+  },
+
+  async changePassword(
+    payload: ChangePasswordPayload,
+  ): Promise<MessageResponse> {
+    const { data } = await axiosClient.post<MessageResponse>(
+      endpoints.auth.changePassword,
       payload,
     );
     return data;

@@ -3,7 +3,9 @@ import uuid
 from fastapi import APIRouter, Depends, File, Request, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
-from app.modules.auth.dependencies import get_optional_current_user
+from app.modules.auth.dependencies import (
+    get_optional_current_user_streaming,
+)
 from app.modules.courses.dependencies import require_course_manager
 from app.modules.lessons.schemas import (
     LessonCreate,
@@ -126,7 +128,7 @@ def stream_lesson_video(
     lesson_id: uuid.UUID,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User | None = Depends(get_optional_current_user),
+    current_user: User | None = Depends(get_optional_current_user_streaming),
 ) -> Response:
     service = LessonService(db)
     lesson = service.get_lesson_for_video(lesson_id, current_user)

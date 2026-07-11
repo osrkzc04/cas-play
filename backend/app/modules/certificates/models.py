@@ -58,8 +58,8 @@ class Certificate(Base, BaseModel):
         nullable=False,
     )
 
-    # Promedio del curso al momento de aprobar (sobre 10, BR-027).
-    average_score: Mapped[Decimal] = mapped_column(
+    # Nota de la evaluación final al momento de aprobar (sobre 10, BR-027).
+    final_score: Mapped[Decimal] = mapped_column(
         Numeric(5, 2),
         nullable=False,
     )

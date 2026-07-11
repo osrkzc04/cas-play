@@ -8,6 +8,7 @@ from app.modules.audit.models import AuditLog  # noqa: F401
 from app.modules.auth.models import PasswordResetToken, RefreshToken  # noqa: F401
 from app.modules.certificates.models import Certificate  # noqa: F401
 from app.modules.course_modules.models import Module  # noqa: F401
+from app.modules.course_topics.models import CourseTopic  # noqa: F401
 from app.modules.courses.models import Course  # noqa: F401
 from app.modules.enrollments.models import Enrollment  # noqa: F401
 from app.modules.evaluations.models import (  # noqa: F401

@@ -14,4 +14,5 @@ export interface AuthUser {
   role: Role;
   is_active: boolean;
   is_verified: boolean;
+  must_change_password: boolean;
 }

@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.modules.courses.models import Course
 from app.shared.enums import CourseStatus
@@ -12,15 +12,16 @@ class CourseRepository:
         self.db = db
 
     def get_by_id(self, course_id: uuid.UUID) -> Course | None:
-        statement = select(Course).where(Course.id == course_id)
+        # Carga anticipada de topics para la respuesta de detalle sin N+1.
+        statement = (
+            select(Course)
+            .where(Course.id == course_id)
+            .options(selectinload(Course.topics))
+        )
         return self.db.scalar(statement)
 
-    def create(self, instructor_id: uuid.UUID, title: str, description: str | None) -> Course:
-        course = Course(
-            instructor_id=instructor_id,
-            title=title,
-            description=description,
-        )
+    def create(self, instructor_id: uuid.UUID, **fields) -> Course:
+        course = Course(instructor_id=instructor_id, **fields)
 
         self.db.add(course)
         self.db.commit()

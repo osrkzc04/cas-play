@@ -20,10 +20,10 @@ export function CatalogPage() {
   return (
     <section className="space-y-8">
       <header className="space-y-2">
-        <h1 className="text-3xl font-bold text-slate-900">
+        <h1 className="text-3xl font-bold text-gray-900">
           Explora nuestros cursos
         </h1>
-        <p className="text-slate-500">
+        <p className="text-gray-500">
           Aprende gastronomía a tu ritmo con clases en video impartidas por
           nuestros instructores.
         </p>

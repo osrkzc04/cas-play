@@ -70,3 +70,25 @@ class CertificateRepository:
             .where(Certificate.user_id == user_id)
         )
         return self.db.scalar(statement) or 0
+
+    def list_all(
+        self,
+        course_id: uuid.UUID | None,
+        skip: int,
+        limit: int,
+    ) -> list[Certificate]:
+        statement = select(Certificate)
+        if course_id is not None:
+            statement = statement.where(Certificate.course_id == course_id)
+        statement = (
+            statement.order_by(Certificate.issued_at.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+        return list(self.db.scalars(statement).all())
+
+    def count_all(self, course_id: uuid.UUID | None) -> int:
+        statement = select(func.count()).select_from(Certificate)
+        if course_id is not None:
+            statement = statement.where(Certificate.course_id == course_id)
+        return self.db.scalar(statement) or 0

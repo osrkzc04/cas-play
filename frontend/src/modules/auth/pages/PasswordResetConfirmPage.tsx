@@ -27,10 +27,10 @@ export function PasswordResetConfirmPage() {
 
   return (
     <Card className="p-8">
-      <h1 className="mb-1 text-2xl font-bold text-slate-900">
+      <h1 className="mb-1 text-2xl font-bold text-gray-900">
         Restablecer contraseña
       </h1>
-      <p className="mb-6 text-sm text-slate-500">
+      <p className="mb-6 text-sm text-gray-500">
         Ingresa el token recibido y tu nueva contraseña.
       </p>
 

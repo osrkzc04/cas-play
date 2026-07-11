@@ -72,6 +72,14 @@ class User(Base, BaseModel):
         nullable=False,
     )
 
+    # Los estudiantes creados durante una matrícula administrativa reciben una
+    # contraseña temporal por correo y deben cambiarla en su primer ingreso.
+    must_change_password: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+
     role: Mapped["Role"] = relationship(
         back_populates="users",
     )

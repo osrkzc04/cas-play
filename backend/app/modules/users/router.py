@@ -72,7 +72,7 @@ def create_user(
     current_user=Depends(require_admin),
 ):
     service = UserService(db)
-    return service.create_user(user_data)
+    return service.create_user(user_data, actor=current_user)
 
 
 @router.get(

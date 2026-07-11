@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { Select } from "@/shared/components/Select";
+import { getRoleLabel } from "@/shared/auth/roles";
 import {
   createUserSchema,
   editUserSchema,
@@ -52,10 +53,19 @@ export function UserForm({
     },
   });
 
-  const roleOptions = roles.map((role) => ({
-    value: role.id,
-    label: role.name,
-  }));
+  // BR-036: los estudiantes se dan de alta al matricularlos, no desde aquí.
+  // Se oculta el rol STUDENT al crear; en edición solo se conserva para mostrar
+  // el rol actual de quien ya es estudiante.
+  const roleOptions = roles
+    .filter((role) =>
+      role.name === "STUDENT"
+        ? isEdit && role.id === defaultValues?.role_id
+        : true,
+    )
+    .map((role) => ({
+      value: role.id,
+      label: getRoleLabel(role.name),
+    }));
 
   return (
     <form
@@ -82,13 +92,10 @@ export function UserForm({
         {...register("email")}
       />
       {!isEdit && (
-        <Input
-          label="Contraseña"
-          type="password"
-          autoComplete="new-password"
-          error={errors.password?.message}
-          {...register("password")}
-        />
+        <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-500">
+          Se generará una contraseña temporal y se enviará al correo indicado. El
+          usuario deberá cambiarla en su primer ingreso.
+        </p>
       )}
       <Select
         label="Rol"
@@ -98,7 +105,7 @@ export function UserForm({
         {...register("role_id")}
       />
       {isEdit && (
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        <label className="flex items-center gap-2 text-sm text-gray-700">
           <input type="checkbox" {...register("is_active")} />
           Usuario activo
         </label>

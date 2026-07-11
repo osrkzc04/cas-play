@@ -3,7 +3,6 @@ import uuid
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
-from app.modules.course_modules.models import Module
 from app.modules.evaluations.models import (
     AnswerOption,
     AttemptAnswer,
@@ -22,27 +21,18 @@ class EvaluationRepository:
         statement = select(Evaluation).where(Evaluation.id == evaluation_id)
         return self.db.scalar(statement)
 
-    def get_by_module(self, module_id: uuid.UUID) -> Evaluation | None:
-        statement = select(Evaluation).where(Evaluation.module_id == module_id)
+    def get_by_course(self, course_id: uuid.UUID) -> Evaluation | None:
+        statement = select(Evaluation).where(Evaluation.course_id == course_id)
         return self.db.scalar(statement)
-
-    def list_by_course(self, course_id: uuid.UUID) -> list[Evaluation]:
-        statement = (
-            select(Evaluation)
-            .join(Module, Module.id == Evaluation.module_id)
-            .where(Module.course_id == course_id)
-            .order_by(Module.position)
-        )
-        return list(self.db.scalars(statement).all())
 
     def create(
         self,
-        module_id: uuid.UUID,
+        course_id: uuid.UUID,
         title: str,
         description: str | None,
     ) -> Evaluation:
         evaluation = Evaluation(
-            module_id=module_id,
+            course_id=course_id,
             title=title,
             description=description,
         )

@@ -57,7 +57,7 @@ class QuestionResponse(BaseModel):
 
 class EvaluationResponse(BaseModel):
     id: uuid.UUID
-    module_id: uuid.UUID
+    course_id: uuid.UUID
     title: str
     description: str | None
     question_count: int

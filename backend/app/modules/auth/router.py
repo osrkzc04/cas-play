@@ -1,14 +1,22 @@
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.modules.auth.dependencies import get_current_user
+from app.core.config import settings
+from app.core.email import (
+    build_notification_email,
+    build_welcome_email,
+    send_email,
+)
+from app.modules.auth.dependencies import get_current_user, require_roles
 from app.modules.auth.schemas import (
     AuthUserResponse,
+    ChangePasswordRequest,
     LoginRequest,
     LogoutRequest,
     PasswordResetConfirm,
     PasswordResetRequest,
     RefreshTokenRequest,
+    TestEmailRequest,
     TokenResponse,
 )
 from app.modules.auth.service import AuthService
@@ -78,6 +86,24 @@ def get_me(
         "role": current_user.role.name,
         "is_active": current_user.is_active,
         "is_verified": current_user.is_verified,
+        "must_change_password": current_user.must_change_password,
+    }
+
+
+@router.post(
+    "/change-password",
+    response_model=MessageResponse,
+)
+def change_password(
+    change_data: ChangePasswordRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    service = AuthService(db)
+    service.change_password(current_user, change_data)
+
+    return {
+        "message": "Contraseña actualizada correctamente"
     }
 
 
@@ -91,17 +117,10 @@ def request_password_reset(
     db: Session = Depends(get_db),
 ):
     service = AuthService(db)
-    result = service.request_password_reset(reset_data.email)
-
-    # Temporalmente mostramos el token en desarrollo.
-    # Cuando configuremos correo, esto debe cambiar.
-    if result.startswith("Si el correo existe"):
-        return {
-            "message": result
-        }
+    service.request_password_reset(reset_data.email)
 
     return {
-        "message": f"Token temporal de recuperación: {result}"
+        "message": "Si el correo existe, se enviarán instrucciones de recuperación"
     }
 
 
@@ -118,4 +137,43 @@ def confirm_password_reset(
 
     return {
         "message": "Contraseña actualizada correctamente"
+    }
+
+
+@router.post(
+    "/test-email",
+    response_model=MessageResponse,
+)
+def send_test_email(
+    request: TestEmailRequest,
+    current_user: User = Depends(require_roles(["ADMIN"])),
+):
+    # Utilidad de diagnóstico (solo ADMIN) para validar la configuración SMTP y
+    # la maquetación de las plantillas. Con EMAILS_ENABLED=False el envío solo se
+    # registra en log (ver send_email).
+    if request.template == "welcome":
+        subject = "Prueba — Bienvenida a Culinary Arts School"
+        html_body = build_welcome_email(
+            first_name=current_user.first_name,
+            email=str(request.to),
+            temporary_password="Temporal123",
+        )
+    else:
+        subject = "Prueba de notificación — Culinary Arts School"
+        html_body = build_notification_email(
+            title="Correo de prueba",
+            message=(
+                "Este es un correo de prueba enviado desde la plataforma de "
+                "Culinary Arts School. Si lo recibes, la configuración de envío "
+                "funciona correctamente."
+            ),
+            recipient_name=current_user.first_name,
+            footer_note="Mensaje generado manualmente desde el panel de administración.",
+        )
+
+    send_email(to=str(request.to), subject=subject, html_body=html_body)
+
+    delivery = "enviado" if settings.EMAILS_ENABLED else "registrado en log (SMTP deshabilitado)"
+    return {
+        "message": f"Correo de prueba {delivery} para {request.to}"
     }

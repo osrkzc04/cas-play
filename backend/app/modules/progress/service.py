@@ -137,10 +137,16 @@ class ProgressService:
             course_id,
         )
 
+        last_lesson_id = self.progress_repository.last_accessed_lesson_id(
+            current_user.id,
+            course_id,
+        )
+
         return CourseProgressResponse(
             course_id=course_id,
             total_lessons=total_lessons,
             completed_lessons=completed_lessons,
             percentage=percentage,
+            last_lesson_id=last_lesson_id,
             lessons=[LessonProgressResponse.model_validate(r) for r in records],
         )

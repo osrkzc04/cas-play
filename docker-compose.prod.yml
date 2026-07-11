@@ -1,0 +1,99 @@
+services:
+  postgres:
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - cas_postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      PROJECT_NAME: ${PROJECT_NAME}
+      API_V1_PREFIX: /api/v1
+      # Base de datos: POSTGRES_HOST apunta al servicio, no a localhost.
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      SECRET_KEY: ${SECRET_KEY}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: 15
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      # PUBLIC_BASE_URL debe ser el dominio del backend: el QR de los certificados
+      # codifica {PUBLIC_BASE_URL}/api/v1/certificates/verify/{code}.
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      MEDIA_ROOT: storage
+      EMAILS_ENABLED: "true"
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_FROM_NAME: ${SMTP_FROM_NAME}
+      SMTP_TLS: "true"
+      FIRST_ADMIN_EMAIL: ${FIRST_ADMIN_EMAIL}
+      FIRST_ADMIN_PASSWORD: ${FIRST_ADMIN_PASSWORD}
+      FIRST_ADMIN_FIRST_NAME: ${FIRST_ADMIN_FIRST_NAME}
+      FIRST_ADMIN_LAST_NAME: ${FIRST_ADMIN_LAST_NAME}
+    volumes:
+      - cas_storage_prod:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.cas-api.rule=Host(`apicas.kamaycode.ec`)
+      - traefik.http.routers.cas-api.entrypoints=websecure
+      - traefik.http.routers.cas-api.tls.certresolver=letsencrypt
+      - traefik.http.services.cas-api.loadbalancer.server.port=8000
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # VITE_API_URL se inyecta en build-time (Vite lo compila en el bundle).
+        # Cambiar el dominio del backend obliga a reconstruir el frontend.
+        VITE_API_URL: ${VITE_API_URL}
+    restart: always
+    networks:
+      - dokploy-network
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.cas-web.rule=Host(`cas.kamaycode.ec`)
+      - traefik.http.routers.cas-web.entrypoints=websecure
+      - traefik.http.routers.cas-web.tls.certresolver=letsencrypt
+      - traefik.http.services.cas-web.loadbalancer.server.port=80
+
+volumes:
+  cas_postgres_prod_data:
+  cas_storage_prod:
+
+networks:
+  # Red gestionada por Dokploy/Traefik para exponer los servicios públicamente.
+  dokploy-network:
+    external: true
+  # Red privada backend <-> postgres (sin exposición al host).
+  internal:

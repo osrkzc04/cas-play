@@ -1,13 +1,16 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Pencil, Power, PowerOff } from "lucide-react";
 
 import { Alert } from "@/shared/components/Alert";
 import { Badge } from "@/shared/components/Badge";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
+import { DropdownMenu } from "@/shared/components/DropdownMenu";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { PageLoader } from "@/shared/components/PageLoader";
 import { getApiErrorMessage } from "@/shared/lib/errors";
+import { getRoleLabel } from "@/shared/auth/roles";
 import {
   useRoles,
   useSetUserActive,
@@ -26,7 +29,7 @@ export function UsersListPage() {
 
   const roleNameById = useMemo(() => {
     const map = new Map<string, string>();
-    roles?.forEach((role) => map.set(role.id, role.name));
+    roles?.forEach((role) => map.set(role.id, getRoleLabel(role.name)));
     return map;
   }, [roles]);
 
@@ -34,8 +37,8 @@ export function UsersListPage() {
     <section className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Usuarios</h1>
-          <p className="text-sm text-slate-500">
+          <h1 className="text-2xl font-bold text-gray-900">Usuarios</h1>
+          <p className="text-sm text-gray-500">
             Administra las cuentas y roles de la plataforma.
           </p>
         </div>
@@ -57,25 +60,25 @@ export function UsersListPage() {
       )}
 
       {users && users.length > 0 && (
-        <Card className="overflow-x-auto">
+        <Card className="overflow-x-auto p-0">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-200 text-xs uppercase text-slate-500">
+            <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
               <tr>
-                <th className="px-4 py-3">Nombre</th>
-                <th className="px-4 py-3">Correo</th>
-                <th className="px-4 py-3">Rol</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3 text-right">Acciones</th>
+                <th className="px-4 py-3 font-semibold">Nombre</th>
+                <th className="px-4 py-3 font-semibold">Correo</th>
+                <th className="px-4 py-3 font-semibold">Rol</th>
+                <th className="px-4 py-3 font-semibold">Estado</th>
+                <th className="px-4 py-3 text-right font-semibold">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-gray-100">
               {users.map((user) => (
-                <tr key={user.id}>
-                  <td className="px-4 py-3 font-medium text-slate-800">
+                <tr key={user.id} className="transition-colors hover:bg-gray-50">
+                  <td className="px-4 py-3 font-medium text-gray-800">
                     {user.first_name} {user.last_name}
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{user.email}</td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-gray-500">{user.email}</td>
+                  <td className="px-4 py-3 text-gray-600">
                     {roleNameById.get(user.role_id) ?? "—"}
                   </td>
                   <td className="px-4 py-3">
@@ -84,28 +87,31 @@ export function UsersListPage() {
                     </Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-end gap-2">
-                      <Link to={`/dashboard/users/${user.id}/edit`}>
-                        <Button variant="outline" size="sm">
-                          Editar
-                        </Button>
-                      </Link>
-                      <Button
-                        variant={user.is_active ? "danger" : "secondary"}
-                        size="sm"
-                        isLoading={
-                          setActive.isPending &&
-                          setActive.variables?.id === user.id
-                        }
-                        onClick={() =>
-                          setActive.mutate({
-                            id: user.id,
-                            is_active: !user.is_active,
-                          })
-                        }
-                      >
-                        {user.is_active ? "Desactivar" : "Activar"}
-                      </Button>
+                    <div className="flex justify-end">
+                      <DropdownMenu
+                        items={[
+                          {
+                            key: "edit",
+                            label: "Editar",
+                            icon: Pencil,
+                            to: `/dashboard/users/${user.id}/edit`,
+                          },
+                          {
+                            key: "toggle",
+                            label: user.is_active ? "Desactivar" : "Activar",
+                            icon: user.is_active ? PowerOff : Power,
+                            tone: user.is_active ? "danger" : "default",
+                            loading:
+                              setActive.isPending &&
+                              setActive.variables?.id === user.id,
+                            onSelect: () =>
+                              setActive.mutate({
+                                id: user.id,
+                                is_active: !user.is_active,
+                              }),
+                          },
+                        ]}
+                      />
                     </div>
                   </td>
                 </tr>
@@ -124,7 +130,7 @@ export function UsersListPage() {
         >
           Anterior
         </Button>
-        <span className="text-sm text-slate-600">Página {page}</span>
+        <span className="text-sm text-gray-600">Página {page}</span>
         <Button
           variant="outline"
           size="sm"

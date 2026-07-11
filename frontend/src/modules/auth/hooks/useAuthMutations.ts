@@ -13,3 +13,9 @@ export function useConfirmPasswordReset() {
     mutationFn: authService.confirmPasswordReset,
   });
 }
+
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: authService.changePassword,
+  });
+}

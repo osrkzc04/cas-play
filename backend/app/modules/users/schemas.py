@@ -32,7 +32,8 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    password: str = Field(..., min_length=8, max_length=128)
+    # La contraseña no se solicita: el alta de personal (ADMIN/INSTRUCTOR) genera
+    # una contraseña temporal que se envía por correo (BR-037).
     role_id: uuid.UUID
 
 

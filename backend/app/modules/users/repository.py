@@ -56,11 +56,33 @@ class UserRepository:
         return list(self.db.scalars(statement).all())
 
     def create(self, user_data: UserCreate, password_hash: str) -> User:
-        data = user_data.model_dump(exclude={"password"})
-
         user = User(
-            **data,
+            **user_data.model_dump(),
             password_hash=password_hash,
+            must_change_password=True,
+        )
+
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+
+        return user
+
+    def create_student(
+        self,
+        first_name: str,
+        last_name: str,
+        email: str,
+        password_hash: str,
+        role_id: uuid.UUID,
+    ) -> User:
+        user = User(
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            password_hash=password_hash,
+            role_id=role_id,
+            must_change_password=True,
         )
 
         self.db.add(user)

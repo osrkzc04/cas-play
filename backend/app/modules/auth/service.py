@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.email import build_password_reset_email, send_email
 from app.core.exceptions import BadRequestException, UnauthorizedException
 from app.core.jwt import create_access_token, create_refresh_token, decode_token
 from app.core.security import get_password_hash, verify_password
@@ -12,7 +13,11 @@ from app.modules.auth.repository import (
     PasswordResetTokenRepository,
     RefreshTokenRepository,
 )
-from app.modules.auth.schemas import LoginRequest, PasswordResetConfirm
+from app.modules.auth.schemas import (
+    ChangePasswordRequest,
+    LoginRequest,
+    PasswordResetConfirm,
+)
 from app.modules.users.models import User
 from app.modules.users.repository import UserRepository
 from app.shared.enums import AuditAction
@@ -132,11 +137,13 @@ class AuthService:
 
         self.refresh_token_repository.revoke(stored_token)
 
-    def request_password_reset(self, email: str) -> str:
+    def request_password_reset(self, email: str) -> None:
         user = self.user_repository.get_by_email(email)
 
+        # No se revela si el correo existe (evita enumeración de usuarios): el
+        # router responde siempre con el mismo mensaje genérico.
         if user is None:
-            return "Si el correo existe, se enviarán instrucciones de recuperación"
+            return
 
         token = secrets.token_urlsafe(48)
 
@@ -150,8 +157,14 @@ class AuthService:
             expires_at=expires_at,
         )
 
-        # Más adelante aquí enviaremos el token por correo.
-        return token
+        send_email(
+            to=user.email,
+            subject="Restablece tu contraseña — Culinary Arts School",
+            html_body=build_password_reset_email(
+                first_name=user.first_name,
+                token=token,
+            ),
+        )
 
     def confirm_password_reset(
         self,
@@ -175,6 +188,32 @@ class AuthService:
 
         self.password_reset_token_repository.mark_as_used(stored_token)
 
+        self.refresh_token_repository.revoke_all_by_user_id(user.id)
+
+        self.audit.record(
+            action=AuditAction.PASSWORD_CHANGED,
+            actor_id=user.id,
+            entity_type="user",
+            entity_id=user.id,
+        )
+
+    def change_password(
+        self,
+        user: User,
+        change_data: ChangePasswordRequest,
+    ) -> None:
+        if not verify_password(change_data.current_password, user.password_hash):
+            raise BadRequestException("La contraseña actual es incorrecta")
+
+        user.password_hash = get_password_hash(change_data.new_password)
+        # Limpia la bandera del onboarding administrativo: tras el primer cambio
+        # el estudiante deja de ser forzado a actualizar su contraseña.
+        user.must_change_password = False
+
+        self.db.commit()
+
+        # Cierra sesiones previas; el cliente seguirá operando con su access
+        # token vigente y renovará con un refresh nuevo en el próximo login.
         self.refresh_token_repository.revoke_all_by_user_id(user.id)
 
         self.audit.record(

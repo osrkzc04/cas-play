@@ -9,8 +9,7 @@ from app.core.exceptions import (
     ForbiddenException,
     NotFoundException,
 )
-from app.modules.course_modules.repository import ModuleRepository
-from app.modules.course_modules.service import ModuleService
+from app.modules.courses.service import CourseService
 from app.modules.enrollments.repository import EnrollmentRepository
 from app.modules.evaluations.models import (
     AttemptAnswer,
@@ -54,10 +53,9 @@ class EvaluationService:
         self.evaluation_repository = EvaluationRepository(db)
         self.question_repository = QuestionRepository(db)
         self.attempt_repository = AttemptRepository(db)
-        self.module_repository = ModuleRepository(db)
         self.enrollment_repository = EnrollmentRepository(db)
-        # Reutiliza el control de propiedad/rol sobre el curso del módulo.
-        self.module_service = ModuleService(db)
+        # Reutiliza el control de propiedad/rol sobre el curso.
+        self.course_service = CourseService(db)
 
     # ------------------------------------------------------------------ #
     # Gestión (ADMIN / INSTRUCTOR)
@@ -72,8 +70,8 @@ class EvaluationService:
         if evaluation is None:
             raise NotFoundException("Evaluación no encontrada")
 
-        # Valida que el usuario gestione el curso dueño del módulo.
-        self.module_service.get_managed_module(evaluation.module_id, current_user)
+        # Valida que el usuario gestione el curso dueño de la evaluación.
+        self.course_service.get_managed_course(evaluation.course_id, current_user)
         return evaluation
 
     def _validate_question_options(
@@ -100,7 +98,7 @@ class EvaluationService:
         question_count = self.evaluation_repository.count_questions(evaluation.id)
         return EvaluationResponse(
             id=evaluation.id,
-            module_id=evaluation.module_id,
+            course_id=evaluation.course_id,
             title=evaluation.title,
             description=evaluation.description,
             question_count=question_count,
@@ -111,38 +109,38 @@ class EvaluationService:
 
     def create_evaluation(
         self,
-        module_id: uuid.UUID,
+        course_id: uuid.UUID,
         data: EvaluationCreate,
         current_user: User,
     ) -> EvaluationResponse:
-        self.module_service.get_managed_module(module_id, current_user)
+        self.course_service.get_managed_course(course_id, current_user)
 
-        # Cada módulo tiene una única evaluación (BR-020).
-        if self.evaluation_repository.get_by_module(module_id) is not None:
-            raise ConflictException("El módulo ya tiene una evaluación")
+        # Cada curso tiene una única evaluación final (BR-020).
+        if self.evaluation_repository.get_by_course(course_id) is not None:
+            raise ConflictException("El curso ya tiene una evaluación final")
 
         evaluation = self.evaluation_repository.create(
-            module_id=module_id,
+            course_id=course_id,
             title=data.title,
             description=data.description,
         )
         return self._build_evaluation_response(evaluation)
 
-    def get_evaluation_by_module(
+    def get_evaluation_by_course(
         self,
-        module_id: uuid.UUID,
+        course_id: uuid.UUID,
         current_user: User,
     ) -> EvaluationDetailResponse:
-        self.module_service.get_managed_module(module_id, current_user)
+        self.course_service.get_managed_course(course_id, current_user)
 
-        evaluation = self.evaluation_repository.get_by_module(module_id)
+        evaluation = self.evaluation_repository.get_by_course(course_id)
         if evaluation is None:
             raise NotFoundException("Evaluación no encontrada")
 
         questions = self.question_repository.list_by_evaluation(evaluation.id)
         return EvaluationDetailResponse(
             id=evaluation.id,
-            module_id=evaluation.module_id,
+            course_id=evaluation.course_id,
             title=evaluation.title,
             description=evaluation.description,
             question_count=len(questions),
@@ -271,12 +269,8 @@ class EvaluationService:
         if evaluation is None:
             raise NotFoundException("Evaluación no encontrada")
 
-        module = self.module_repository.get_by_id(evaluation.module_id)
-        if module is None:
-            raise NotFoundException("Evaluación no encontrada")
-
         # Solo estudiantes matriculados pueden rendir la evaluación (BR-016).
-        if not self.enrollment_repository.exists(current_user.id, module.course_id):
+        if not self.enrollment_repository.exists(current_user.id, evaluation.course_id):
             raise ForbiddenException("No se encuentra matriculado en este curso")
 
         return evaluation

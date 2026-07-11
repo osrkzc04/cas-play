@@ -10,7 +10,7 @@ class CertificateResponse(BaseModel):
     course_id: uuid.UUID
     course_title: str
     student_name: str
-    average_score: float
+    final_score: float
     issued_at: datetime
     pdf_available: bool
     created_at: datetime
@@ -21,12 +21,13 @@ class CertificateEligibilityResponse(BaseModel):
     course_id: uuid.UUID
     total_lessons: int
     completed_lessons: int
+    # Avance del curso, solo informativo: el certificado depende del examen final.
     progress_percentage: float
-    # Promedio del curso sobre las evaluaciones rendidas; None si faltan evaluaciones.
-    average_score: float | None
+    # Nota de la evaluación final rendida; None si aún no la ha rendido.
+    final_score: float | None
     passing_score: float
-    is_progress_complete: bool
-    are_evaluations_complete: bool
+    # Indica si el curso ya tiene una evaluación final configurada.
+    has_evaluation: bool
     is_eligible: bool
     already_issued: bool
     # Motivo por el que aún no se puede emitir; None cuando es elegible.

@@ -77,3 +77,30 @@ class RatingRepository:
         statement = select(func.avg(Rating.score)).where(Rating.course_id == course_id)
         average = self.db.scalar(statement)
         return float(average) if average is not None else None
+
+    def list_all(
+        self,
+        course_id: uuid.UUID | None,
+        skip: int,
+        limit: int,
+    ) -> list[Rating]:
+        statement = select(Rating).options(
+            joinedload(Rating.user),
+            joinedload(Rating.course),
+        )
+        if course_id is not None:
+            statement = statement.where(Rating.course_id == course_id)
+        statement = (
+            statement.order_by(Rating.created_at.desc()).offset(skip).limit(limit)
+        )
+        return list(self.db.scalars(statement).all())
+
+    def count_all(self, course_id: uuid.UUID | None) -> int:
+        statement = select(func.count()).select_from(Rating)
+        if course_id is not None:
+            statement = statement.where(Rating.course_id == course_id)
+        return self.db.scalar(statement) or 0
+
+    def delete(self, rating: Rating) -> None:
+        self.db.delete(rating)
+        self.db.commit()

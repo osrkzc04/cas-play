@@ -8,4 +8,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+RUN chmod +x entrypoint.sh
+
+# Producción: el entrypoint aplica migraciones, seed idempotente y arranca uvicorn
+# sin --reload. Se usa CMD (no ENTRYPOINT) para que docker-compose.yml (dev) pueda
+# sobreescribir el comando y conservar hot-reload.
+CMD ["./entrypoint.sh"]

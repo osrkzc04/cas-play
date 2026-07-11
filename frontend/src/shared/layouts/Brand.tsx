@@ -1,21 +1,32 @@
 import { Link } from "react-router-dom";
 
 import { cn } from "@/shared/lib/cn";
+import { useTheme } from "@/shared/theme/useTheme";
 
 interface BrandProps {
   to?: string;
+  /** `full` = logotipo horizontal; `icon` = monograma compacto. */
+  variant?: "full" | "icon";
   className?: string;
 }
 
-export function Brand({ to = "/", className }: BrandProps) {
+export function Brand({ to = "/", variant = "full", className }: BrandProps) {
+  // La variante de logo sigue el tema: tinta oscura en claro, tinta clara en oscuro.
+  const { theme } = useTheme();
+  const form = variant === "icon" ? "icon" : "horizontal";
+  const src = `/brand/cas-logo-${form}-${theme}.png`;
+
   return (
-    <Link to={to} className={cn("flex items-center gap-2", className)}>
-      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 font-bold text-white">
-        C
-      </span>
-      <span className="text-lg font-bold tracking-tight text-slate-900">
-        Culinary Arts School
-      </span>
+    <Link
+      to={to}
+      aria-label="Culinary Arts School"
+      className={cn("inline-flex items-center", className)}
+    >
+      <img
+        src={src}
+        alt="Culinary Arts School"
+        className={variant === "icon" ? "h-9 w-auto" : "h-9 w-auto"}
+      />
     </Link>
   );
 }

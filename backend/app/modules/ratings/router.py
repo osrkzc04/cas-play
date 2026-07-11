@@ -3,8 +3,9 @@ import uuid
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
-from app.modules.ratings.dependencies import require_student
+from app.modules.ratings.dependencies import require_admin, require_student
 from app.modules.ratings.schemas import (
+    AdminRatingResponse,
     CourseRatingSummary,
     PublicRatingResponse,
     RatingCreate,
@@ -50,6 +51,19 @@ def update_course_rating(
 
 
 @router.get(
+    "/courses/{course_id}/rating",
+    response_model=RatingResponse | None,
+)
+def get_my_course_rating(
+    course_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_student),
+):
+    service = RatingService(db)
+    return service.get_my_rating(course_id, current_user)
+
+
+@router.get(
     "/courses/{course_id}/ratings",
     response_model=PaginatedResponse[PublicRatingResponse],
 )
@@ -73,3 +87,35 @@ def get_course_rating_summary(
 ):
     service = RatingService(db)
     return service.get_course_summary(course_id)
+
+
+# --------------------------------------------------------------------------- #
+# Moderación de valoraciones (ADMIN)
+# --------------------------------------------------------------------------- #
+
+@router.get(
+    "/admin/ratings",
+    response_model=PaginatedResponse[AdminRatingResponse],
+)
+def list_all_ratings(
+    course_id: uuid.UUID | None = Query(None),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    service = RatingService(db)
+    return service.list_all_ratings(course_id=course_id, page=page, size=size)
+
+
+@router.delete(
+    "/admin/ratings/{rating_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+def delete_rating(
+    rating_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    service = RatingService(db)
+    service.delete_rating(rating_id)

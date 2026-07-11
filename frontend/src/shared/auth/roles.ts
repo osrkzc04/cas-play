@@ -6,6 +6,12 @@ export const roleLabels: Record<Role, string> = {
   STUDENT: "Estudiante",
 };
 
+// Traduce el nombre de rol del backend (ADMIN/INSTRUCTOR/STUDENT) a su etiqueta
+// en español; si llega un valor desconocido se devuelve tal cual.
+export function getRoleLabel(name: string): string {
+  return roleLabels[name as Role] ?? name;
+}
+
 export const STAFF_ROLES: Role[] = ["ADMIN", "INSTRUCTOR"];
 
 export function getInitials(firstName: string, lastName: string): string {

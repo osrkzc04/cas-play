@@ -31,3 +31,4 @@ class Enrollment(Base, BaseModel):
     )
 
     course: Mapped["Course"] = relationship()  # noqa: F821
+    student: Mapped["User"] = relationship()  # noqa: F821

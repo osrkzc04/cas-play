@@ -14,6 +14,12 @@ class CourseStatus(str, Enum):
     FINISHED = "FINISHED"
 
 
+class CourseLevel(str, Enum):
+    BEGINNER = "BEGINNER"
+    INTERMEDIATE = "INTERMEDIATE"
+    ADVANCED = "ADVANCED"
+
+
 class MaterialType(str, Enum):
     PDF = "PDF"
     IMAGE = "IMAGE"
@@ -39,4 +45,5 @@ class AuditAction(str, Enum):
     ENROLLMENT_CREATED = "ENROLLMENT_CREATED"
     CERTIFICATE_ISSUED = "CERTIFICATE_ISSUED"
     PASSWORD_CHANGED = "PASSWORD_CHANGED"
+    USER_CREATED = "USER_CREATED"
     USER_UPDATED = "USER_UPDATED"

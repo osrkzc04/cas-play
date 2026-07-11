@@ -14,8 +14,7 @@ export const axiosClient = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-// Bare instance used only to refresh tokens, so the response interceptor below
-// never re-enters itself when the refresh call returns 401.
+
 const refreshClient = axios.create({
   baseURL: config.apiUrl,
   headers: { "Content-Type": "application/json" },
@@ -37,7 +36,6 @@ axiosClient.interceptors.request.use(
   },
 );
 
-// Single in-flight refresh shared by every queued request that hit a 401.
 let refreshPromise: Promise<string> | null = null;
 
 async function refreshAccessToken(): Promise<string> {

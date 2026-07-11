@@ -23,6 +23,7 @@ interface AuthContextValue {
   isLoading: boolean;
   login: (input: LoginInput) => Promise<AuthUser>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -74,6 +75,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return currentUser;
   }, []);
 
+  const refreshUser = useCallback(async (): Promise<void> => {
+    setUser(await fetchCurrentUser());
+  }, []);
+
   const logout = useCallback(async (): Promise<void> => {
     const refreshToken = tokenStorage.getRefresh();
     try {
@@ -94,8 +99,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       login,
       logout,
+      refreshUser,
     }),
-    [user, isLoading, login, logout],
+    [user, isLoading, login, logout, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

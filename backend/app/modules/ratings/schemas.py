@@ -40,3 +40,13 @@ class PublicRatingResponse(BaseModel):
     comment: str | None
     student_name: str
     created_at: datetime
+
+
+class AdminRatingResponse(BaseModel):
+    id: uuid.UUID
+    course_id: uuid.UUID
+    course_title: str
+    student_name: str
+    score: int
+    comment: str | None
+    created_at: datetime

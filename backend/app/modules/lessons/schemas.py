@@ -30,6 +30,7 @@ class LessonResponse(LessonBase):
     module_id: uuid.UUID
     position: int
     has_video: bool
+    material_count: int = 0
     created_at: datetime
     updated_at: datetime
 

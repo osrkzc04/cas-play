@@ -1,8 +1,9 @@
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.modules.lessons.models import Lesson
 from app.modules.materials.models import SupplementalMaterial
 from app.shared.enums import MaterialType
 
@@ -16,6 +17,16 @@ class MaterialRepository:
             SupplementalMaterial.id == material_id
         )
         return self.db.scalar(statement)
+
+    def count_by_module(self, module_id: uuid.UUID) -> dict[uuid.UUID, int]:
+        # Conteo de materiales por clase del módulo en una sola consulta.
+        statement = (
+            select(SupplementalMaterial.lesson_id, func.count())
+            .join(Lesson, Lesson.id == SupplementalMaterial.lesson_id)
+            .where(Lesson.module_id == module_id)
+            .group_by(SupplementalMaterial.lesson_id)
+        )
+        return {lesson_id: count for lesson_id, count in self.db.execute(statement)}
 
     def list_by_lesson(self, lesson_id: uuid.UUID) -> list[SupplementalMaterial]:
         statement = (

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query, status
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app.modules.certificates.dependencies import require_student
+from app.modules.certificates.dependencies import require_admin, require_student
 from app.modules.certificates.schemas import (
     CertificateEligibilityResponse,
     CertificateResponse,
@@ -67,6 +67,42 @@ def list_my_certificates(
 ):
     service = CertificateService(db)
     return service.list_my_certificates(current_user=current_user, page=page, size=size)
+
+
+# --------------------------------------------------------------------------- #
+# Supervisión global de certificados emitidos (ADMIN)
+# --------------------------------------------------------------------------- #
+
+@router.get(
+    "/admin/certificates",
+    response_model=PaginatedResponse[CertificateResponse],
+)
+def list_all_certificates(
+    course_id: uuid.UUID | None = Query(None),
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    service = CertificateService(db)
+    return service.list_all_certificates(course_id=course_id, page=page, size=size)
+
+
+@router.get(
+    "/admin/certificates/{certificate_id}/download",
+)
+def download_certificate_admin(
+    certificate_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+) -> FileResponse:
+    service = CertificateService(db)
+    certificate = service.get_certificate_for_admin_download(certificate_id)
+    return FileResponse(
+        resolve_path(certificate.pdf_path),
+        media_type="application/pdf",
+        filename=f"certificado-{certificate.code}.pdf",
+    )
 
 
 # --------------------------------------------------------------------------- #

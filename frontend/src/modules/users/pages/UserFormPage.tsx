@@ -46,7 +46,6 @@ export function UserFormPage() {
         first_name: values.first_name,
         last_name: values.last_name,
         email: values.email,
-        password: values.password,
         role_id: values.role_id,
       },
       { onSuccess },
@@ -71,7 +70,7 @@ export function UserFormPage() {
   return (
     <section className="mx-auto max-w-2xl space-y-6">
       <header>
-        <h1 className="text-2xl font-bold text-slate-900">
+        <h1 className="text-2xl font-bold text-gray-900">
           {isEdit ? "Editar usuario" : "Nuevo usuario"}
         </h1>
       </header>

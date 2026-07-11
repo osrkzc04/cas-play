@@ -1,3 +1,4 @@
+import os
 from functools import lru_cache
 
 from pydantic import computed_field
@@ -33,18 +34,38 @@ class Settings(BaseSettings):
     MEDIA_ROOT: str = "storage"
     MAX_VIDEO_SIZE_MB: int = 500
     MAX_MATERIAL_SIZE_MB: int = 25
+    MAX_COVER_SIZE_MB: int = 5
 
     # Base pública del servidor; el QR de los certificados codifica la URL de
     # validación pública apuntando a esta raíz (BR-030).
     PUBLIC_BASE_URL: str = "http://localhost:8000"
+
+    # Base del frontend; usada para construir enlaces dentro de los correos
+    # (login para usuarios recién creados, etc.).
+    FRONTEND_BASE_URL: str = "http://localhost:5173"
+
+    # Configuración de correo saliente (SMTP). Cuando EMAILS_ENABLED es False
+    # (entorno local sin servidor SMTP) el envío se registra en log en vez de
+    # despacharse, para no bloquear los flujos de negocio.
+    EMAILS_ENABLED: bool = False
+    SMTP_HOST: str = "localhost"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = "no-reply@casplay.com"
+    SMTP_FROM_NAME: str = "Culinary Arts School"
+    SMTP_TLS: bool = True
 
     FIRST_ADMIN_EMAIL: str = "admin@casplay.com"
     FIRST_ADMIN_PASSWORD: str = "Admin12345"
     FIRST_ADMIN_FIRST_NAME: str = "Admin"
     FIRST_ADMIN_LAST_NAME: str = "CAS"
 
+    # En local se lee `../.env.dev`; en despliegue (Docker/Dokploy) las variables
+    # se inyectan en el entorno y tienen prioridad. ENV_FILE permite apuntar a
+    # otro archivo sin tocar el código.
     model_config = SettingsConfigDict(
-        env_file="../.env.dev",
+        env_file=os.getenv("ENV_FILE", "../.env.dev"),
         env_file_encoding="utf-8",
         extra="ignore",
     )

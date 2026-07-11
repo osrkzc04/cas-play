@@ -1,0 +1,6 @@
+# Los scripts ejecutados dentro de contenedores Linux deben mantener saltos de
+# linea LF; con core.autocrlf=true (Windows) git los convertiria a CRLF y el
+# contenedor fallaria al arrancar ("no such file or directory").
+*.sh text eol=lf
+entrypoint.sh text eol=lf
+Dockerfile text eol=lf

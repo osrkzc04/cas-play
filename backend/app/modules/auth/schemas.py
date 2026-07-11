@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -31,10 +32,16 @@ class AuthUserResponse(BaseModel):
     role: str
     is_active: bool
     is_verified: bool
+    must_change_password: bool
 
     model_config = {
         "from_attributes": True
     }
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=8, max_length=128)
+    new_password: str = Field(..., min_length=8, max_length=128)
 
 
 class PasswordResetRequest(BaseModel):
@@ -44,6 +51,11 @@ class PasswordResetRequest(BaseModel):
 class PasswordResetConfirm(BaseModel):
     token: str
     new_password: str = Field(..., min_length=8, max_length=128)
+
+
+class TestEmailRequest(BaseModel):
+    to: EmailStr
+    template: Literal["welcome", "notification"] = "notification"
 
 
 class RefreshTokenResponse(BaseModel):

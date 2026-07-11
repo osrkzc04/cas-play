@@ -36,15 +36,14 @@ class _Eligibility:
     total_lessons: int
     completed_lessons: int
     progress_percentage: float
-    average_score: float | None
-    is_progress_complete: bool
-    are_evaluations_complete: bool
+    final_score: float | None
+    has_evaluation: bool
     is_eligible: bool
     reason: str | None
 
 
 class CertificateService:
-    PASSING_SCORE = 7.0  # BR-026: promedio mínimo aprobatorio 7/10.
+    PASSING_SCORE = 7.0  # BR-026: nota mínima aprobatoria de la evaluación final 7/10.
     _MAX_CODE_ATTEMPTS = 5
 
     def __init__(self, db: Session):
@@ -85,50 +84,38 @@ class CertificateService:
             current_user.id,
             course_id,
         )
+        # El avance es solo informativo; el certificado depende de aprobar la
+        # evaluación final del curso (BR-026, BR-027).
         progress_percentage = (
             round(completed_lessons / total_lessons * 100, 2)
             if total_lessons
             else 0.0
         )
-        is_progress_complete = total_lessons > 0 and completed_lessons == total_lessons
 
-        # El promedio del curso se calcula con la mejor nota de cada evaluación
-        # de módulo; aprueba por promedio, no por evaluación individual (BR-027).
-        evaluations = self.evaluation_repository.list_by_course(course_id)
-        best_scores: list[float] = []
-        missing_evaluation = False
-        for evaluation in evaluations:
-            best = self.attempt_repository.best_submitted_score(
+        # El certificado se concede al aprobar la única evaluación final del
+        # curso con la mejor nota rendida (BR-027).
+        evaluation = self.evaluation_repository.get_by_course(course_id)
+        best = (
+            self.attempt_repository.best_submitted_score(
                 current_user.id,
                 evaluation.id,
             )
-            if best is None:
-                missing_evaluation = True
-            else:
-                best_scores.append(float(best))
-
-        are_evaluations_complete = bool(evaluations) and not missing_evaluation
-        average_score = (
-            round(sum(best_scores) / len(evaluations), 2)
-            if are_evaluations_complete
+            if evaluation is not None
             else None
         )
+        final_score = round(float(best), 2) if best is not None else None
 
         reason = self._eligibility_reason(
-            total_lessons=total_lessons,
-            is_progress_complete=is_progress_complete,
-            has_evaluations=bool(evaluations),
-            are_evaluations_complete=are_evaluations_complete,
-            average_score=average_score,
+            has_evaluation=evaluation is not None,
+            final_score=final_score,
         )
 
         return _Eligibility(
             total_lessons=total_lessons,
             completed_lessons=completed_lessons,
             progress_percentage=progress_percentage,
-            average_score=average_score,
-            is_progress_complete=is_progress_complete,
-            are_evaluations_complete=are_evaluations_complete,
+            final_score=final_score,
+            has_evaluation=evaluation is not None,
             is_eligible=reason is None,
             reason=reason,
         )
@@ -136,23 +123,16 @@ class CertificateService:
     def _eligibility_reason(
         self,
         *,
-        total_lessons: int,
-        is_progress_complete: bool,
-        has_evaluations: bool,
-        are_evaluations_complete: bool,
-        average_score: float | None,
+        has_evaluation: bool,
+        final_score: float | None,
     ) -> str | None:
-        if total_lessons == 0:
-            return "El curso aún no tiene contenido disponible"
-        if not is_progress_complete:
-            return "Debe completar el 100% del contenido del curso"
-        if not has_evaluations:
-            return "El curso aún no tiene evaluaciones disponibles"
-        if not are_evaluations_complete:
-            return "Debe rendir todas las evaluaciones del curso"
-        if average_score is None or average_score < self.PASSING_SCORE:
+        if not has_evaluation:
+            return "El curso aún no tiene evaluación final disponible"
+        if final_score is None:
+            return "Debe rendir la evaluación final del curso"
+        if final_score < self.PASSING_SCORE:
             return (
-                f"El promedio del curso ({average_score:.2f}) no alcanza el "
+                f"La nota de la evaluación final ({final_score:.2f}) no alcanza el "
                 f"mínimo de {self.PASSING_SCORE:.0f}/10"
             )
         return None
@@ -176,10 +156,9 @@ class CertificateService:
             total_lessons=eligibility.total_lessons,
             completed_lessons=eligibility.completed_lessons,
             progress_percentage=eligibility.progress_percentage,
-            average_score=eligibility.average_score,
+            final_score=eligibility.final_score,
             passing_score=self.PASSING_SCORE,
-            is_progress_complete=eligibility.is_progress_complete,
-            are_evaluations_complete=eligibility.are_evaluations_complete,
+            has_evaluation=eligibility.has_evaluation,
             is_eligible=eligibility.is_eligible,
             already_issued=already_issued,
             reason=eligibility.reason,
@@ -219,7 +198,7 @@ class CertificateService:
             code=code,
             student_name=student_name,
             course_title=course.title,
-            average_score=eligibility.average_score,
+            final_score=eligibility.final_score,
             issued_at=issued_at,
         )
         certificate = self.certificate_repository.add(certificate)
@@ -228,7 +207,7 @@ class CertificateService:
             code=code,
             student_name=student_name,
             course_title=course.title,
-            average_score=float(eligibility.average_score),
+            final_score=float(eligibility.final_score),
             issued_at=issued_at,
         )
         certificate = self.certificate_repository.save(certificate)
@@ -275,6 +254,43 @@ class CertificateService:
             size=size,
             pages=math.ceil(total / size) if total else 0,
         )
+
+    # ------------------------------------------------------------------ #
+    # Supervisión global (ADMIN)
+    # ------------------------------------------------------------------ #
+
+    def list_all_certificates(
+        self,
+        course_id: uuid.UUID | None,
+        page: int,
+        size: int,
+    ) -> PaginatedResponse:
+        skip = (page - 1) * size
+        items = self.certificate_repository.list_all(
+            course_id=course_id,
+            skip=skip,
+            limit=size,
+        )
+        total = self.certificate_repository.count_all(course_id=course_id)
+
+        return PaginatedResponse(
+            items=[self._to_response(item) for item in items],
+            total=total,
+            page=page,
+            size=size,
+            pages=math.ceil(total / size) if total else 0,
+        )
+
+    def get_certificate_for_admin_download(
+        self,
+        certificate_id: uuid.UUID,
+    ) -> Certificate:
+        certificate = self.certificate_repository.get_by_id(certificate_id)
+        if certificate is None:
+            raise NotFoundException("Certificado no encontrado")
+        if not certificate.pdf_path:
+            raise NotFoundException("El certificado no tiene un PDF disponible")
+        return certificate
 
     def _get_owned_certificate(
         self,
@@ -331,7 +347,7 @@ class CertificateService:
             course_id=certificate.course_id,
             course_title=certificate.course_title,
             student_name=certificate.student_name,
-            average_score=float(certificate.average_score),
+            final_score=float(certificate.final_score),
             issued_at=certificate.issued_at,
             pdf_available=bool(certificate.pdf_path),
             created_at=certificate.created_at,

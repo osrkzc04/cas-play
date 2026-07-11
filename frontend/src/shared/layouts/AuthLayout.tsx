@@ -1,10 +1,14 @@
 import { Outlet } from "react-router-dom";
 
+import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { Brand } from "./Brand";
 
 export function AuthLayout() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-100 px-4 py-12">
+    <div className="relative flex min-h-screen flex-col items-center justify-center bg-surface px-4 py-12">
+      <div className="absolute right-4 top-4">
+        <ThemeToggle />
+      </div>
       <div className="mb-8">
         <Brand />
       </div>

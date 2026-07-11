@@ -32,31 +32,31 @@ router = APIRouter(tags=["Evaluations"])
 # --------------------------------------------------------------------------- #
 
 @router.post(
-    "/modules/{module_id}/evaluation",
+    "/courses/{course_id}/evaluation",
     response_model=EvaluationResponse,
     status_code=status.HTTP_201_CREATED,
 )
 def create_evaluation(
-    module_id: uuid.UUID,
+    course_id: uuid.UUID,
     payload: EvaluationCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_course_manager),
 ):
     service = EvaluationService(db)
-    return service.create_evaluation(module_id, payload, current_user)
+    return service.create_evaluation(course_id, payload, current_user)
 
 
 @router.get(
-    "/modules/{module_id}/evaluation",
+    "/courses/{course_id}/evaluation",
     response_model=EvaluationDetailResponse,
 )
-def get_module_evaluation(
-    module_id: uuid.UUID,
+def get_course_evaluation(
+    course_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_course_manager),
 ):
     service = EvaluationService(db)
-    return service.get_evaluation_by_module(module_id, current_user)
+    return service.get_evaluation_by_course(course_id, current_user)
 
 
 @router.patch(

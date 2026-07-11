@@ -6,6 +6,7 @@ export const endpoints = {
     me: "/auth/me",
     passwordResetRequest: "/auth/password-reset/request",
     passwordResetConfirm: "/auth/password-reset/confirm",
+    changePassword: "/auth/change-password",
   },
   users: {
     list: "/users",
@@ -19,9 +20,97 @@ export const endpoints = {
     create: "/courses",
     manage: "/courses/manage",
     detail: (id: string) => `/courses/${id}`,
+    manageDetail: (id: string) => `/courses/${id}/manage`,
     update: (id: string) => `/courses/${id}`,
     publish: (id: string) => `/courses/${id}/publish`,
     hide: (id: string) => `/courses/${id}/hide`,
     finish: (id: string) => `/courses/${id}/finish`,
+    topics: (id: string) => `/courses/${id}/topics`,
+    cover: (id: string) => `/courses/${id}/cover`,
+    students: (id: string) => `/courses/${id}/students`,
+  },
+  modules: {
+    list: (courseId: string) => `/courses/${courseId}/modules`,
+    create: (courseId: string) => `/courses/${courseId}/modules`,
+    reorder: (courseId: string) => `/courses/${courseId}/modules/reorder`,
+    update: (moduleId: string) => `/modules/${moduleId}`,
+    delete: (moduleId: string) => `/modules/${moduleId}`,
+  },
+  lessons: {
+    list: (moduleId: string) => `/modules/${moduleId}/lessons`,
+    create: (moduleId: string) => `/modules/${moduleId}/lessons`,
+    reorder: (moduleId: string) => `/modules/${moduleId}/lessons/reorder`,
+    update: (lessonId: string) => `/lessons/${lessonId}`,
+    delete: (lessonId: string) => `/lessons/${lessonId}`,
+    video: (lessonId: string) => `/lessons/${lessonId}/video`,
+  },
+  materials: {
+    list: (lessonId: string) => `/lessons/${lessonId}/materials`,
+    create: (lessonId: string) => `/lessons/${lessonId}/materials`,
+    delete: (materialId: string) => `/materials/${materialId}`,
+    download: (materialId: string) => `/materials/${materialId}/download`,
+  },
+  evaluations: {
+    byCourse: (courseId: string) => `/courses/${courseId}/evaluation`,
+    update: (evaluationId: string) => `/evaluations/${evaluationId}`,
+    delete: (evaluationId: string) => `/evaluations/${evaluationId}`,
+    questions: (evaluationId: string) =>
+      `/evaluations/${evaluationId}/questions`,
+    updateQuestion: (questionId: string) => `/questions/${questionId}`,
+    deleteQuestion: (questionId: string) => `/questions/${questionId}`,
+    attempts: (evaluationId: string) =>
+      `/evaluations/${evaluationId}/attempts`,
+    submitAttempt: (attemptId: string) => `/attempts/${attemptId}/submit`,
+    attempt: (attemptId: string) => `/attempts/${attemptId}`,
+  },
+  enrollments: {
+    enroll: (courseId: string) => `/courses/${courseId}/enroll`,
+    status: (courseId: string) => `/courses/${courseId}/enrollment`,
+    mine: "/enrollments/me",
+  },
+  adminEnrollments: {
+    list: "/admin/enrollments",
+    create: "/admin/enrollments",
+    userLookup: "/admin/users/lookup",
+  },
+  curriculum: {
+    byCourse: (courseId: string) => `/courses/${courseId}/curriculum`,
+  },
+  progress: {
+    lesson: (lessonId: string) => `/lessons/${lessonId}/progress`,
+    complete: (lessonId: string) => `/lessons/${lessonId}/progress/complete`,
+    course: (courseId: string) => `/courses/${courseId}/progress`,
+  },
+  certificates: {
+    eligibility: (courseId: string) =>
+      `/courses/${courseId}/certificate/eligibility`,
+    issue: (courseId: string) => `/courses/${courseId}/certificate`,
+    mine: "/certificates/me",
+    detail: (id: string) => `/certificates/${id}`,
+    download: (id: string) => `/certificates/${id}/download`,
+    verify: (code: string) => `/certificates/verify/${code}`,
+  },
+  adminCertificates: {
+    list: "/admin/certificates",
+    download: (id: string) => `/admin/certificates/${id}/download`,
+  },
+  ratings: {
+    create: (courseId: string) => `/courses/${courseId}/rating`,
+    update: (courseId: string) => `/courses/${courseId}/rating`,
+    mine: (courseId: string) => `/courses/${courseId}/rating`,
+    list: (courseId: string) => `/courses/${courseId}/ratings`,
+    summary: (courseId: string) => `/courses/${courseId}/ratings/summary`,
+  },
+  adminRatings: {
+    list: "/admin/ratings",
+    delete: (id: string) => `/admin/ratings/${id}`,
+  },
+  metrics: {
+    admin: "/metrics/admin",
+    instructor: "/metrics/instructor",
+    student: "/metrics/student",
+  },
+  audit: {
+    logs: "/audit/logs",
   },
 } as const;

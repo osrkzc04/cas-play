@@ -1,11 +1,13 @@
 import uuid
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, Query, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.modules.courses.dependencies import require_course_manager
 from app.modules.courses.schemas import (
     CourseCreate,
+    CourseDetailResponse,
     CourseResponse,
     CourseUpdate,
 )
@@ -14,6 +16,7 @@ from app.modules.users.models import User
 from app.shared.dependencies import get_db
 from app.shared.enums import CourseStatus
 from app.shared.pagination import PaginatedResponse
+from app.shared.storage import resolve_path
 
 
 router = APIRouter(
@@ -71,7 +74,7 @@ def list_managed_courses(
 
 @router.get(
     "/{course_id}/manage",
-    response_model=CourseResponse,
+    response_model=CourseDetailResponse,
 )
 def get_managed_course(
     course_id: uuid.UUID,
@@ -84,7 +87,7 @@ def get_managed_course(
 
 @router.get(
     "/{course_id}",
-    response_model=CourseResponse,
+    response_model=CourseDetailResponse,
 )
 def get_course(
     course_id: uuid.UUID,
@@ -145,3 +148,44 @@ def finish_course(
 ):
     service = CourseService(db)
     return service.finish_course(course_id, current_user)
+
+
+@router.put(
+    "/{course_id}/cover",
+    response_model=CourseResponse,
+)
+def set_course_cover(
+    course_id: uuid.UUID,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_course_manager),
+):
+    service = CourseService(db)
+    return service.set_cover(course_id, file, current_user)
+
+
+@router.delete(
+    "/{course_id}/cover",
+    response_model=CourseResponse,
+)
+def delete_course_cover(
+    course_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_course_manager),
+):
+    service = CourseService(db)
+    return service.delete_cover(course_id, current_user)
+
+
+@router.get(
+    "/{course_id}/cover",
+)
+def get_course_cover(
+    course_id: uuid.UUID,
+    db: Session = Depends(get_db),
+) -> FileResponse:
+    # Público: la etiqueta <img> no envía Authorization. La portada no es
+    # contenido sensible (a diferencia de videos y materiales).
+    service = CourseService(db)
+    cover_path = service.get_cover_path(course_id)
+    return FileResponse(resolve_path(cover_path))

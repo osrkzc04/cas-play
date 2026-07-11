@@ -22,6 +22,9 @@ services:
     restart: always
     env_file:
       - .env.dev
+    # Dev: sobreescribe el CMD del Dockerfile (entrypoint de producción) para
+    # conservar hot-reload con el código montado desde ./backend.
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "${BACKEND_PORT}:8000"
     volumes:

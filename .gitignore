@@ -5,6 +5,7 @@
 tesis/
 diagramas/
 templates/
+recursos/
 
 # ==========================
 # VARIABLES DE ENTORNO
@@ -44,9 +45,9 @@ htmlcov/
 # STORAGE
 # ==========================
 
-backend/storage/videos/
-backend/storage/materials/
-backend/storage/certificates/
+# Contenido subido/generado: se persiste en volumen y se migra por
+# pg_dump/docker cp, nunca por git.
+backend/storage/
 
 # ==========================
 # NODE
@@ -115,3 +116,4 @@ docs/DATABASE.md
 docs/BUSINESS_RULES.md
 docs/MODULES.md
 docs/API_SPEC.md
+AGENTS.md

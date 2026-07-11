@@ -51,3 +51,4 @@ class Rating(Base, BaseModel):
     )
 
     user: Mapped["User"] = relationship()  # noqa: F821
+    course: Mapped["Course"] = relationship()  # noqa: F821

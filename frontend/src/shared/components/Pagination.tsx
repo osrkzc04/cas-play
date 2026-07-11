@@ -21,7 +21,7 @@ export function Pagination({ page, pages, onPageChange }: PaginationProps) {
       >
         Anterior
       </Button>
-      <span className="text-sm text-slate-600">
+      <span className="text-sm text-gray-600">
         Página {page} de {pages}
       </span>
       <Button
