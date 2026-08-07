@@ -1,0 +1,14 @@
+services:
+  structurizr:
+    image: structurizr/structurizr:latest
+    container_name: cas-play-structurizr
+
+    command: local
+
+    ports:
+      - "8080:8080"
+
+    volumes:
+      - ./:/usr/local/structurizr
+
+    restart: unless-stopped

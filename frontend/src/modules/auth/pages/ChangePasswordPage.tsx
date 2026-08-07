@@ -8,6 +8,7 @@ import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
 import { getApiErrorMessage } from "@/shared/lib/errors";
+import { PasswordRequirements } from "../components/PasswordRequirements";
 import { useChangePassword } from "../hooks/useAuthMutations";
 import {
   changePasswordSchema,
@@ -22,10 +23,13 @@ export function ChangePasswordPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
   });
+
+  const newPassword = watch("new_password") ?? "";
 
   const isForced = Boolean(user?.must_change_password);
 
@@ -75,13 +79,16 @@ export function ChangePasswordPage() {
             error={errors.current_password?.message}
             {...register("current_password")}
           />
-          <Input
-            label="Nueva contraseña"
-            type="password"
-            autoComplete="new-password"
-            error={errors.new_password?.message}
-            {...register("new_password")}
-          />
+          <div className="flex flex-col gap-2">
+            <Input
+              label="Nueva contraseña"
+              type="password"
+              autoComplete="new-password"
+              error={errors.new_password?.message}
+              {...register("new_password")}
+            />
+            <PasswordRequirements value={newPassword} />
+          </div>
           <Input
             label="Confirmar nueva contraseña"
             type="password"

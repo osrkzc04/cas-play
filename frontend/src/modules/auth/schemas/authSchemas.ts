@@ -1,14 +1,16 @@
 import { z } from "zod";
 
+import { passwordSchema } from "./passwordPolicy";
+
 export const loginSchema = z.object({
-  email: z.string().email("Ingresa un correo válido"),
-  password: z.string().min(8, "La contraseña debe tener al menos 8 caracteres"),
+  email: z.string().trim().email("Ingresa un correo válido"),
+  password: z.string().min(1, "Ingresa tu contraseña"),
 });
 
 export type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const passwordResetRequestSchema = z.object({
-  email: z.string().email("Ingresa un correo válido"),
+  email: z.string().trim().email("Ingresa un correo válido"),
 });
 
 export type PasswordResetRequestValues = z.infer<
@@ -17,10 +19,7 @@ export type PasswordResetRequestValues = z.infer<
 
 export const passwordResetConfirmSchema = z.object({
   token: z.string().min(1, "El token es obligatorio"),
-  new_password: z
-    .string()
-    .min(8, "La contraseña debe tener al menos 8 caracteres")
-    .max(128, "La contraseña no puede superar 128 caracteres"),
+  new_password: passwordSchema,
 });
 
 export type PasswordResetConfirmValues = z.infer<
@@ -29,13 +28,8 @@ export type PasswordResetConfirmValues = z.infer<
 
 export const changePasswordSchema = z
   .object({
-    current_password: z
-      .string()
-      .min(8, "La contraseña debe tener al menos 8 caracteres"),
-    new_password: z
-      .string()
-      .min(8, "La contraseña debe tener al menos 8 caracteres")
-      .max(128, "La contraseña no puede superar 128 caracteres"),
+    current_password: z.string().min(1, "Ingresa tu contraseña actual"),
+    new_password: passwordSchema,
     confirm_password: z.string(),
   })
   .refine((values) => values.new_password === values.confirm_password, {

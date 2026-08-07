@@ -13,6 +13,7 @@ from app.modules.courses.router import router as courses_router
 from app.modules.curriculum.router import router as curriculum_router
 from app.modules.enrollments.router import router as enrollments_router
 from app.modules.evaluations.router import router as evaluations_router
+from app.modules.instructor_profiles.router import router as instructor_profiles_router
 from app.modules.lessons.router import router as lessons_router
 from app.modules.materials.router import router as materials_router
 from app.modules.metrics.router import router as metrics_router
@@ -43,6 +44,11 @@ app.include_router(
 
 app.include_router(
     users_router,
+    prefix=settings.API_V1_PREFIX,
+)
+
+app.include_router(
+    instructor_profiles_router,
     prefix=settings.API_V1_PREFIX,
 )
 

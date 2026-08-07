@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field, computed_field
 
 from app.core.config import settings
 from app.modules.course_topics.schemas import CourseTopicResponse
+from app.modules.instructor_profiles.schemas import InstructorPublicResponse
 from app.shared.enums import CourseLevel, CourseStatus
 
 
@@ -63,3 +64,9 @@ class CourseResponse(CourseBase):
 class CourseDetailResponse(CourseResponse):
     # Incluye el temario informativo para la página de detalle.
     topics: list[CourseTopicResponse] = Field(default_factory=list)
+    # Perfil público del instructor. Se arma en el service (no mapea desde el
+    # ORM, cuyo atributo `instructor` es un User); el alias evita esa lectura.
+    instructor: InstructorPublicResponse | None = Field(
+        default=None,
+        validation_alias="instructor_public",
+    )

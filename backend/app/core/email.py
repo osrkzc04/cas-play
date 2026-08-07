@@ -213,10 +213,13 @@ def build_password_reset_email(first_name: str, token: str) -> str:
 
     content_html = f"""
       <p style="margin: 0 0 12px 0;">Hemos recibido una solicitud para
-      restablecer tu contraseña. Usa el siguiente código en la pantalla de
-      recuperación o haz clic en el botón:</p>
+      restablecer tu contraseña. Haz clic en el botón de abajo y define tu
+      nueva contraseña.</p>
+      <p style="margin: 16px 0 8px 0; color: {_MUTED_COLOR}; font-size: 13px;">
+      Si el botón no funciona, abre la pantalla "Ya tengo un token" e ingresa
+      este código:</p>
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-             style="margin: 8px 0 4px 0; background-color: {_PAGE_BG};
+             style="margin: 4px 0; background-color: {_PAGE_BG};
                     border: 1px solid {_BORDER_COLOR}; border-radius: 8px;">
         <tr>
           <td style="padding: 16px 20px; font-family: 'Courier New', monospace;

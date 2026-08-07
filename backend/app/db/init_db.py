@@ -11,6 +11,7 @@ from app.modules.course_modules.models import Module  # noqa: F401
 from app.modules.course_topics.models import CourseTopic  # noqa: F401
 from app.modules.courses.models import Course  # noqa: F401
 from app.modules.enrollments.models import Enrollment  # noqa: F401
+from app.modules.instructor_profiles.models import InstructorProfile  # noqa: F401
 from app.modules.evaluations.models import (  # noqa: F401
     AnswerOption,
     AttemptAnswer,

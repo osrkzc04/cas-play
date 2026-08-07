@@ -83,3 +83,9 @@ class User(Base, BaseModel):
     role: Mapped["Role"] = relationship(
         back_populates="users",
     )
+
+    # Perfil docente opcional (1:1). Solo lo poseen los usuarios INSTRUCTOR.
+    instructor_profile: Mapped["InstructorProfile"] = relationship(  # noqa: F821
+        back_populates="user",
+        uselist=False,
+    )

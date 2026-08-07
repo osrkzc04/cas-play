@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { CheckCircle2, RefreshCw, Trash2, Upload, Video } from "lucide-react";
 
-import { Alert, Button, Spinner } from "@/shared/components";
+import { Alert, Button, ProgressBar, Spinner } from "@/shared/components";
 import { VideoPlayer } from "@/shared/components/VideoPlayer";
 import { getApiErrorMessage } from "@/shared/lib/errors";
 import { useVideoMutation } from "../hooks/useLessons";
@@ -18,6 +18,9 @@ export function VideoManager({ lesson, moduleId }: VideoManagerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const mutation = useVideoMutation(moduleId);
   const [sizeError, setSizeError] = useState<string | null>(null);
+  // Porcentaje de subida (0-100) solo mientras se transfiere el archivo; null
+  // cuando no hay subida en curso (incluye borrado y reposo).
+  const [progress, setProgress] = useState<number | null>(null);
 
   const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -30,10 +33,28 @@ export function VideoManager({ lesson, moduleId }: VideoManagerProps) {
       return;
     }
     setSizeError(null);
-    mutation.mutate({ lessonId: lesson.id, file });
+    setProgress(0);
+    mutation.mutate(
+      { lessonId: lesson.id, file, onProgress: setProgress },
+      { onSettled: () => setProgress(null) },
+    );
   };
 
   const openPicker = () => inputRef.current?.click();
+
+  // Bloque de progreso: barra + porcentaje mientras sube; al llegar al 100% el
+  // servidor aún guarda el archivo, así que se indica "Procesando".
+  const uploadingBlock = progress !== null && (
+    <div className="flex flex-col gap-1.5">
+      <span className="flex items-center gap-1.5 text-sm font-medium text-gray-700">
+        <Upload className="h-4 w-4 animate-pulse text-brand-600" aria-hidden="true" />
+        {progress < 100
+          ? `Subiendo video… ${progress}%`
+          : "Procesando video…"}
+      </span>
+      <ProgressBar value={progress} />
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -43,6 +64,7 @@ export function VideoManager({ lesson, moduleId }: VideoManagerProps) {
           <div className="max-w-xl">
             <VideoPlayer key={lesson.updated_at} lessonId={lesson.id} />
           </div>
+          {uploadingBlock && <div className="max-w-xl">{uploadingBlock}</div>}
           <div className="flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1.5 text-sm font-medium text-green-700">
               <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
@@ -72,6 +94,10 @@ export function VideoManager({ lesson, moduleId }: VideoManagerProps) {
               Eliminar
             </Button>
           </div>
+        </div>
+      ) : uploadingBlock ? (
+        <div className="rounded-xl border-2 border-dashed border-brand-200 bg-brand-50/40 px-4 py-8">
+          {uploadingBlock}
         </div>
       ) : (
         <button

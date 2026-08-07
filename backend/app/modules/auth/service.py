@@ -21,6 +21,7 @@ from app.modules.auth.schemas import (
 from app.modules.users.models import User
 from app.modules.users.repository import UserRepository
 from app.shared.enums import AuditAction
+from app.shared.password import validate_password_strength
 
 
 class AuthService:
@@ -182,6 +183,8 @@ class AuthService:
         if user is None:
             raise BadRequestException("No se pudo restablecer la contraseña")
 
+        validate_password_strength(reset_data.new_password)
+
         user.password_hash = get_password_hash(reset_data.new_password)
 
         self.db.commit()
@@ -204,6 +207,8 @@ class AuthService:
     ) -> None:
         if not verify_password(change_data.current_password, user.password_hash):
             raise BadRequestException("La contraseña actual es incorrecta")
+
+        validate_password_strength(change_data.new_password)
 
         user.password_hash = get_password_hash(change_data.new_password)
         # Limpia la bandera del onboarding administrativo: tras el primer cambio

@@ -49,6 +49,12 @@ htmlcov/
 # pg_dump/docker cp, nunca por git.
 backend/storage/
 
+# Artefactos de migración de datos (dumps de BD y storage empaquetado).
+_migration/
+
+# Estado en tiempo de ejecución de Structurizr (índice Lucene, locks, thumbnails).
+docs/docs/architecture/structurizr/.structurizr/
+
 # ==========================
 # NODE
 # ==========================

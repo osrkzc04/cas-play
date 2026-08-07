@@ -26,6 +26,7 @@ import { useCertificateEligibility } from "@/modules/certificates/hooks/useCerti
 import { isCourseFinished } from "@/modules/certificates/types";
 import { CurriculumSidebar } from "../components/CurriculumSidebar";
 import { LessonMaterials } from "../components/LessonMaterials";
+import { NoVideoPlaceholder } from "../components/NoVideoPlaceholder";
 import {
   useCompleteLesson,
   useCourseProgress,
@@ -40,6 +41,7 @@ export function LearnPage() {
   const navigate = useNavigate();
 
   const [wide, setWide] = useState(false);
+  const materialsAnchorId = "lesson-materials";
 
   const { user } = useAuth();
   const courseQuery = useCourse(courseId);
@@ -187,9 +189,12 @@ export function LearnPage() {
                 }
               />
             ) : (
-              <div className="flex aspect-video w-full items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-500">
-                Esta clase no tiene video.
-              </div>
+              lessonId && (
+                <NoVideoPlaceholder
+                  lessonId={lessonId}
+                  materialsAnchorId={materialsAnchorId}
+                />
+              )
             )}
 
             {prevLesson && (
@@ -263,7 +268,11 @@ export function LearnPage() {
             </Button>
           </div>
 
-          {lessonId && <LessonMaterials lessonId={lessonId} />}
+          {lessonId && (
+            <div id={materialsAnchorId} className="scroll-mt-6">
+              <LessonMaterials lessonId={lessonId} />
+            </div>
+          )}
         </main>
 
         {!wide && (

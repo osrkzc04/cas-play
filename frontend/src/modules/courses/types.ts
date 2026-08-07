@@ -1,3 +1,5 @@
+import type { InstructorPublic } from "@/modules/instructor-profile/types";
+
 export type CourseStatus = "DRAFT" | "PUBLISHED" | "HIDDEN" | "FINISHED";
 
 export type CourseLevel = "BEGINNER" | "INTERMEDIATE" | "ADVANCED";
@@ -29,6 +31,7 @@ export interface Course {
 
 export interface CourseDetail extends Course {
   topics: CourseTopic[];
+  instructor: InstructorPublic | null;
 }
 
 export interface CourseInfoPayload {

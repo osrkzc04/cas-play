@@ -58,9 +58,17 @@ export function useReorderLessons(moduleId: string) {
 export function useVideoMutation(moduleId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ lessonId, file }: { lessonId: string; file: File | null }) =>
+    mutationFn: ({
+      lessonId,
+      file,
+      onProgress,
+    }: {
+      lessonId: string;
+      file: File | null;
+      onProgress?: (percent: number) => void;
+    }) =>
       file
-        ? lessonService.uploadVideo(lessonId, file)
+        ? lessonService.uploadVideo(lessonId, file, onProgress)
         : lessonService.deleteVideo(lessonId),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: lessonKeys.list(moduleId) }),

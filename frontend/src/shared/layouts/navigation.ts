@@ -7,6 +7,7 @@ import {
   LibraryBig,
   ScrollText,
   Star,
+  UserCircle,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -49,6 +50,13 @@ export const dashboardNav: NavItem[] = [
     icon: BookOpen,
     section: "GESTIÓN",
     roles: ["ADMIN", "INSTRUCTOR"],
+  },
+  {
+    to: "/dashboard/profile",
+    label: "Mi perfil",
+    icon: UserCircle,
+    section: "GESTIÓN",
+    roles: ["INSTRUCTOR"],
   },
   {
     to: "/dashboard/enrollments",

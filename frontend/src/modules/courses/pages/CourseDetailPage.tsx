@@ -27,6 +27,7 @@ import {
 import { useCurriculum } from "@/modules/curriculum/hooks/useCurriculum";
 import { useCourseProgress } from "@/modules/learning/hooks/useProgress";
 import { CourseRatingsSection } from "@/modules/ratings/components/CourseRatingsSection";
+import { InstructorCard } from "../components/InstructorCard";
 import { CertificateEligibilityCard } from "@/modules/certificates/components/CertificateEligibilityCard";
 import { useCertificateEligibility } from "@/modules/certificates/hooks/useCertificates";
 import { isCourseFinished } from "@/modules/certificates/types";
@@ -160,6 +161,8 @@ export function CourseDetailPage() {
             {course.description ?? "Sin descripción disponible."}
           </p>
         </div>
+
+        {course.instructor && <InstructorCard instructor={course.instructor} />}
 
         {infoTopics.length > 0 && (
           <section className="space-y-3">

@@ -41,7 +41,9 @@ class AuthUserResponse(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     current_password: str = Field(..., min_length=8, max_length=128)
-    new_password: str = Field(..., min_length=8, max_length=128)
+    # La robustez se valida en el service (validate_password_strength) para
+    # devolver mensajes en español; aquí solo se acota la longitud máxima.
+    new_password: str = Field(..., max_length=128)
 
 
 class PasswordResetRequest(BaseModel):
@@ -50,7 +52,8 @@ class PasswordResetRequest(BaseModel):
 
 class PasswordResetConfirm(BaseModel):
     token: str
-    new_password: str = Field(..., min_length=8, max_length=128)
+    # La robustez se valida en el service (validate_password_strength).
+    new_password: str = Field(..., max_length=128)
 
 
 class TestEmailRequest(BaseModel):

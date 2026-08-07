@@ -1,12 +1,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { Alert } from "@/shared/components/Alert";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
 import { Input } from "@/shared/components/Input";
 import { getApiErrorMessage } from "@/shared/lib/errors";
+import { PasswordRequirements } from "../components/PasswordRequirements";
 import { useConfirmPasswordReset } from "../hooks/useAuthMutations";
 import {
   passwordResetConfirmSchema,
@@ -15,13 +16,25 @@ import {
 
 export function PasswordResetConfirmPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // El correo enlaza a esta pantalla con el token en la query string. Si viene
+  // por ese enlace lo precargamos y ocultamos el campo técnico: el usuario solo
+  // define su nueva contraseña. El campo manual queda como respaldo para quien
+  // abre la pantalla sin enlace ("Ya tengo un token").
+  const tokenFromLink = searchParams.get("token") ?? "";
+
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<PasswordResetConfirmValues>({
     resolver: zodResolver(passwordResetConfirmSchema),
+    defaultValues: { token: tokenFromLink },
   });
+
+  const newPassword = watch("new_password") ?? "";
 
   const mutation = useConfirmPasswordReset();
 
@@ -31,7 +44,9 @@ export function PasswordResetConfirmPage() {
         Restablecer contraseña
       </h1>
       <p className="mb-6 text-sm text-gray-500">
-        Ingresa el token recibido y tu nueva contraseña.
+        {tokenFromLink
+          ? "Define tu nueva contraseña para completar la recuperación."
+          : "Ingresa el token que recibiste por correo y tu nueva contraseña."}
       </p>
 
       {mutation.isError && (
@@ -55,19 +70,26 @@ export function PasswordResetConfirmPage() {
         className="flex flex-col gap-4"
         noValidate
       >
-        <Input
-          label="Token de recuperación"
-          error={errors.token?.message}
-          {...register("token")}
-        />
-        <Input
-          label="Nueva contraseña"
-          type="password"
-          autoComplete="new-password"
-          placeholder="••••••••"
-          error={errors.new_password?.message}
-          {...register("new_password")}
-        />
+        {tokenFromLink ? (
+          <input type="hidden" {...register("token")} />
+        ) : (
+          <Input
+            label="Token de recuperación"
+            error={errors.token?.message}
+            {...register("token")}
+          />
+        )}
+        <div className="flex flex-col gap-2">
+          <Input
+            label="Nueva contraseña"
+            type="password"
+            autoComplete="new-password"
+            placeholder="••••••••"
+            error={errors.new_password?.message}
+            {...register("new_password")}
+          />
+          <PasswordRequirements value={newPassword} />
+        </div>
         <Button type="submit" className="w-full" isLoading={mutation.isPending}>
           Actualizar contraseña
         </Button>

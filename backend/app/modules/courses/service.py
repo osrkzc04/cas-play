@@ -13,6 +13,7 @@ from app.core.exceptions import (
 )
 from app.modules.audit.service import AuditService
 from app.modules.courses.models import Course
+from app.modules.instructor_profiles.service import InstructorProfileService
 from app.modules.courses.repository import CourseRepository
 from app.modules.courses.schemas import CourseCreate, CourseUpdate
 from app.modules.users.models import User
@@ -101,6 +102,12 @@ class CourseService:
 
         if course is None or course.status != CourseStatus.PUBLISHED:
             raise NotFoundException("Curso no encontrado")
+
+        # Atributo no mapeado que alimenta `instructor` en CourseDetailResponse
+        # (leído por el alias `instructor_public`), evitando una petición extra.
+        course.instructor_public = InstructorProfileService.build_public(
+            course.instructor
+        )
 
         return course
 

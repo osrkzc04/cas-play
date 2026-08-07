@@ -33,6 +33,7 @@ import { MyCertificatesPage } from "@/modules/certificates/pages/MyCertificatesP
 import { CertificateVerifyPage } from "@/modules/certificates/pages/CertificateVerifyPage";
 import { AdminCertificatesListPage } from "@/modules/certificates/pages/AdminCertificatesListPage";
 import { AdminRatingsListPage } from "@/modules/ratings/pages/AdminRatingsListPage";
+import { InstructorProfilePage } from "@/modules/instructor-profile/pages/InstructorProfilePage";
 
 export function AppRoutes() {
   return (
@@ -82,6 +83,13 @@ export function AppRoutes() {
             <Route
               path="/dashboard/certificates"
               element={<MyCertificatesPage />}
+            />
+          </Route>
+
+          <Route element={<RoleRoute roles={["INSTRUCTOR"]} />}>
+            <Route
+              path="/dashboard/profile"
+              element={<InstructorProfilePage />}
             />
           </Route>
 

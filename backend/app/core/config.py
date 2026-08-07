@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     MAX_VIDEO_SIZE_MB: int = 500
     MAX_MATERIAL_SIZE_MB: int = 25
     MAX_COVER_SIZE_MB: int = 5
+    MAX_PROFILE_PHOTO_SIZE_MB: int = 2
 
     # Base pública del servidor; el QR de los certificados codifica la URL de
     # validación pública apuntando a esta raíz (BR-030).

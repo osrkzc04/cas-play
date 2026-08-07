@@ -15,6 +15,14 @@ export const endpoints = {
     update: (id: string) => `/users/${id}`,
     roles: "/users/roles",
   },
+  instructorProfile: {
+    own: "/instructor/profile",
+    photo: "/instructor/profile/photo",
+  },
+  instructors: {
+    profile: (userId: string) => `/instructors/${userId}/profile`,
+    photo: (userId: string) => `/instructors/${userId}/photo`,
+  },
   courses: {
     catalog: "/courses",
     create: "/courses",

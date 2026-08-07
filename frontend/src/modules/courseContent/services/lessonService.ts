@@ -42,13 +42,25 @@ export const lessonService = {
     return data;
   },
 
-  async uploadVideo(lessonId: string, file: File): Promise<Lesson> {
+  async uploadVideo(
+    lessonId: string,
+    file: File,
+    onProgress?: (percent: number) => void,
+  ): Promise<Lesson> {
     const form = new FormData();
     form.append("file", file);
     const { data } = await axiosClient.put<Lesson>(
       endpoints.lessons.video(lessonId),
       form,
-      multipart,
+      {
+        ...multipart,
+        onUploadProgress: (event) => {
+          if (!onProgress || !event.total) {
+            return;
+          }
+          onProgress(Math.round((event.loaded / event.total) * 100));
+        },
+      },
     );
     return data;
   },
