@@ -112,14 +112,23 @@ desktop.ini
 # DOCUMENTACIÓN INTERNA
 # ==========================
 
+# El repositorio contiene únicamente código de la aplicación. Toda la
+# documentación (tesis, reportes, diagramas, QA) se mantiene fuera del control
+# de versiones del despliegue.
+
 CLAUDE.md
 backend/CLAUDE.md
 frontend/CLAUDE.md
-
-docs/ROADMAP.md
-docs/DECISIONS.md
-docs/DATABASE.md
-docs/BUSINESS_RULES.md
-docs/MODULES.md
-docs/API_SPEC.md
 AGENTS.md
+
+README.md
+
+# Documentación de proyecto, diagramas de arquitectura y colección Postman.
+docs/
+
+# Pruebas de carga (Locust) y sus evidencias de rendimiento.
+perf/
+
+# Suite de pruebas automatizadas (documental para la tesis, no despliegue).
+backend/tests/
+backend/pytest.ini
