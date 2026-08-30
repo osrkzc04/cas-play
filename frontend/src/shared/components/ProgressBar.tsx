@@ -21,6 +21,7 @@ export function ProgressBar({ value, className, showValue }: ProgressBarProps) {
         aria-valuenow={clamped}
         aria-valuemin={0}
         aria-valuemax={100}
+        aria-valuetext={`${clamped}% completado`}
       >
         <div
           className={cn(

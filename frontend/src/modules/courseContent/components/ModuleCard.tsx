@@ -109,16 +109,18 @@ export function ModuleCard({
             variant="ghost"
             size="sm"
             onClick={() => setEditing(true)}
+            aria-label="Editar módulo"
           >
-            <Pencil className="h-4 w-4" />
+            <Pencil className="h-4 w-4" aria-hidden="true" />
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={() => setConfirmDelete(true)}
+            aria-label="Eliminar módulo"
           >
-            <Trash2 className="h-4 w-4 text-brand-600" />
+            <Trash2 className="h-4 w-4 text-brand-600" aria-hidden="true" />
           </Button>
         </div>
       </div>

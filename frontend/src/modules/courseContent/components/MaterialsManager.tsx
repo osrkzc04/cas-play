@@ -9,7 +9,14 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { Alert, Badge, Button, EmptyState, Spinner } from "@/shared/components";
+import {
+  Alert,
+  Badge,
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  Spinner,
+} from "@/shared/components";
 import { getApiErrorMessage } from "@/shared/lib/errors";
 import {
   useDeleteMaterial,
@@ -94,6 +101,7 @@ export function MaterialsManager({ lessonId, moduleId }: MaterialsManagerProps) 
   const remove = useDeleteMaterial(lessonId, moduleId);
   const [sizeError, setSizeError] = useState<string | null>(null);
   const [openingId, setOpeningId] = useState<string | null>(null);
+  const [toDelete, setToDelete] = useState<Material | null>(null);
 
   const handleFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -189,7 +197,7 @@ export function MaterialsManager({ lessonId, moduleId }: MaterialsManagerProps) 
                 className="h-9 w-9 px-0 text-gray-400 hover:bg-brand-50 hover:text-brand-600"
                 aria-label={`Eliminar ${material.original_name}`}
                 isLoading={remove.isPending && remove.variables === material.id}
-                onClick={() => remove.mutate(material.id)}
+                onClick={() => setToDelete(material)}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -204,6 +212,22 @@ export function MaterialsManager({ lessonId, moduleId }: MaterialsManagerProps) 
         accept={ACCEPT}
         className="hidden"
         onChange={handleFile}
+      />
+
+      <ConfirmDialog
+        open={toDelete !== null}
+        title="Eliminar material"
+        message={`¿Eliminar "${toDelete?.original_name}"? Esta acción no se puede deshacer.`}
+        confirmLabel="Eliminar"
+        isLoading={remove.isPending}
+        onConfirm={() => {
+          if (toDelete) {
+            remove.mutate(toDelete.id, {
+              onSettled: () => setToDelete(null),
+            });
+          }
+        }}
+        onClose={() => setToDelete(null)}
       />
     </div>
   );

@@ -51,8 +51,10 @@ def _format_date_es(value: datetime) -> str:
 
 
 def _verification_url(code: str) -> str:
-    base = settings.PUBLIC_BASE_URL.rstrip("/")
-    return f"{base}{settings.API_V1_PREFIX}/certificates/verify/{code}"
+    # El QR apunta a la página pública de validación del frontend (/verify/:code),
+    # no al endpoint JSON del API; esa página consume el API por debajo (BR-030).
+    base = settings.FRONTEND_BASE_URL.rstrip("/")
+    return f"{base}/verify/{code}"
 
 
 def _build_qr_png(code: str) -> io.BytesIO:

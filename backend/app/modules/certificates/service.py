@@ -3,6 +3,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import (
@@ -11,6 +12,7 @@ from app.core.exceptions import (
     ForbiddenException,
     NotFoundException,
 )
+from app.shared.storage import delete_file
 from app.modules.audit.service import AuditService
 from app.modules.certificates import generator
 from app.modules.certificates.models import Certificate
@@ -44,6 +46,7 @@ class _Eligibility:
 
 class CertificateService:
     PASSING_SCORE = 7.0  # BR-026: nota mínima aprobatoria de la evaluación final 7/10.
+    REQUIRED_PROGRESS = 100.0  # BR-027: se exige completar el 100% del contenido.
     _MAX_CODE_ATTEMPTS = 5
 
     def __init__(self, db: Session):
@@ -84,8 +87,6 @@ class CertificateService:
             current_user.id,
             course_id,
         )
-        # El avance es solo informativo; el certificado depende de aprobar la
-        # evaluación final del curso (BR-026, BR-027).
         progress_percentage = (
             round(completed_lessons / total_lessons * 100, 2)
             if total_lessons
@@ -108,6 +109,8 @@ class CertificateService:
         reason = self._eligibility_reason(
             has_evaluation=evaluation is not None,
             final_score=final_score,
+            total_lessons=total_lessons,
+            completed_lessons=completed_lessons,
         )
 
         return _Eligibility(
@@ -125,7 +128,17 @@ class CertificateService:
         *,
         has_evaluation: bool,
         final_score: float | None,
+        total_lessons: int,
+        completed_lessons: int,
     ) -> str | None:
+        # BR-027: se exige completar el 100% del contenido y además aprobar la
+        # evaluación final con la nota mínima. Un curso sin clases (total 0) no
+        # bloquea por contenido: admite cursos solo-evaluación (ver test).
+        if total_lessons and completed_lessons < total_lessons:
+            return (
+                f"Debe completar el 100% del contenido "
+                f"({completed_lessons}/{total_lessons} clases)"
+            )
         if not has_evaluation:
             return "El curso aún no tiene evaluación final disponible"
         if final_score is None:
@@ -180,6 +193,18 @@ class CertificateService:
             course_id,
         )
         if existing is not None:
+            # Recuperación: si una emisión previa persistió el certificado pero
+            # falló al generar el PDF, se regenera en lugar de bloquear al usuario.
+            if not existing.pdf_path:
+                existing.pdf_path = generator.build_certificate_pdf(
+                    code=existing.code,
+                    student_name=existing.student_name,
+                    course_title=existing.course_title,
+                    final_score=float(existing.final_score),
+                    issued_at=existing.issued_at,
+                )
+                existing = self.certificate_repository.save(existing)
+                return self._to_response(existing)
             raise ConflictException("El certificado de este curso ya fue emitido")
 
         eligibility = self._compute_eligibility(course_id, current_user)
@@ -190,8 +215,17 @@ class CertificateService:
         issued_at = datetime.now(timezone.utc)
         code = self._generate_unique_code()
 
-        # Se persiste primero para que el índice único reserve el código; el PDF
-        # se genera a continuación y se enlaza al registro.
+        # El PDF se genera antes de persistir: si la generación falla no queda un
+        # certificado sin documento que bloquee reintentos futuros (índice único
+        # user+course). El código se reserva mediante _generate_unique_code.
+        pdf_path = generator.build_certificate_pdf(
+            code=code,
+            student_name=student_name,
+            course_title=course.title,
+            final_score=float(eligibility.final_score),
+            issued_at=issued_at,
+        )
+
         certificate = Certificate(
             user_id=current_user.id,
             course_id=course_id,
@@ -200,17 +234,18 @@ class CertificateService:
             course_title=course.title,
             final_score=eligibility.final_score,
             issued_at=issued_at,
+            pdf_path=pdf_path,
         )
-        certificate = self.certificate_repository.add(certificate)
-
-        certificate.pdf_path = generator.build_certificate_pdf(
-            code=code,
-            student_name=student_name,
-            course_title=course.title,
-            final_score=float(eligibility.final_score),
-            issued_at=issued_at,
-        )
-        certificate = self.certificate_repository.save(certificate)
+        try:
+            certificate = self.certificate_repository.add(certificate)
+        except IntegrityError as exc:
+            # Carrera: una emisión simultánea ya creó el certificado. Se revierte y
+            # se descarta el PDF recién generado para no dejar archivos huérfanos.
+            self.certificate_repository.db.rollback()
+            delete_file(pdf_path)
+            raise ConflictException(
+                "El certificado de este curso ya fue emitido"
+            ) from exc
 
         self.audit.record(
             action=AuditAction.CERTIFICATE_ISSUED,

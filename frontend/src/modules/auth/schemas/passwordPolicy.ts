@@ -5,7 +5,9 @@ import { z } from "zod";
 // (backend/app/shared/password.py).
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 128;
-export const PASSWORD_SPECIAL_CHARS = "@!$%&*";
+// Se admite cualquier símbolo (carácter no alfanumérico, excluyendo espacios);
+// el hint solo orienta con ejemplos. Debe coincidir con el backend.
+export const PASSWORD_SPECIAL_HINT = "@ # $ % & * ! ? . -";
 
 interface PasswordCriterion {
   id: string;
@@ -32,8 +34,8 @@ export const passwordCriteria: PasswordCriterion[] = [
   { id: "number", label: "Un número", test: (value) => /[0-9]/.test(value) },
   {
     id: "special",
-    label: `Un símbolo (${PASSWORD_SPECIAL_CHARS})`,
-    test: (value) => /[@!$%&*]/.test(value),
+    label: `Un símbolo (p. ej. ${PASSWORD_SPECIAL_HINT})`,
+    test: (value) => /[^A-Za-z0-9\s]/.test(value),
   },
 ];
 

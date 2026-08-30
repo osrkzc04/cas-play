@@ -12,3 +12,7 @@ python-jose[cryptography]
 python-multipart
 fpdf2
 segno
+
+# Testing
+pytest
+httpx

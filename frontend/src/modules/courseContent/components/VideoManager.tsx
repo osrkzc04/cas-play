@@ -1,7 +1,13 @@
 import { useRef, useState } from "react";
 import { CheckCircle2, RefreshCw, Trash2, Upload, Video } from "lucide-react";
 
-import { Alert, Button, ProgressBar, Spinner } from "@/shared/components";
+import {
+  Alert,
+  Button,
+  ConfirmDialog,
+  ProgressBar,
+  Spinner,
+} from "@/shared/components";
 import { VideoPlayer } from "@/shared/components/VideoPlayer";
 import { getApiErrorMessage } from "@/shared/lib/errors";
 import { useVideoMutation } from "../hooks/useLessons";
@@ -18,6 +24,7 @@ export function VideoManager({ lesson, moduleId }: VideoManagerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const mutation = useVideoMutation(moduleId);
   const [sizeError, setSizeError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   // Porcentaje de subida (0-100) solo mientras se transfiere el archivo; null
   // cuando no hay subida en curso (incluye borrado y reposo).
   const [progress, setProgress] = useState<number | null>(null);
@@ -66,7 +73,7 @@ export function VideoManager({ lesson, moduleId }: VideoManagerProps) {
           </div>
           {uploadingBlock && <div className="max-w-xl">{uploadingBlock}</div>}
           <div className="flex flex-wrap items-center gap-3">
-            <span className="flex items-center gap-1.5 text-sm font-medium text-green-700">
+            <span className="flex items-center gap-1.5 text-sm font-medium text-green-700 dark:text-green-300">
               <CheckCircle2 className="h-4 w-4" aria-hidden="true" />
               Video cargado
               {mutation.isPending && (
@@ -88,7 +95,7 @@ export function VideoManager({ lesson, moduleId }: VideoManagerProps) {
               variant="danger"
               size="sm"
               disabled={mutation.isPending}
-              onClick={() => mutation.mutate({ lessonId: lesson.id, file: null })}
+              onClick={() => setConfirmDelete(true)}
             >
               <Trash2 className="h-4 w-4" />
               Eliminar
@@ -134,6 +141,21 @@ export function VideoManager({ lesson, moduleId }: VideoManagerProps) {
         accept="video/*"
         className="hidden"
         onChange={handleFile}
+      />
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Eliminar video"
+        message="¿Eliminar el video de esta clase? Esta acción no se puede deshacer."
+        confirmLabel="Eliminar"
+        isLoading={mutation.isPending}
+        onConfirm={() =>
+          mutation.mutate(
+            { lessonId: lesson.id, file: null },
+            { onSettled: () => setConfirmDelete(false) },
+          )
+        }
+        onClose={() => setConfirmDelete(false)}
       />
     </div>
   );

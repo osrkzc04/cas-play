@@ -1,6 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import (
@@ -385,7 +386,23 @@ class EvaluationService:
                 for question in questions
             ],
         )
-        attempt = self.attempt_repository.create(attempt)
+        try:
+            attempt = self.attempt_repository.create(attempt)
+        except IntegrityError as exc:
+            # Carrera: dos solicitudes simultáneas intentaron abrir el mismo número
+            # de intento (índice único evaluación+usuario+número). Se reanuda el que
+            # quedó en curso en lugar de consumir un intento adicional.
+            self.attempt_repository.db.rollback()
+            in_progress = self.attempt_repository.get_in_progress(
+                current_user.id,
+                evaluation_id,
+            )
+            if in_progress is not None:
+                return self._build_attempt_detail(in_progress)
+            raise ConflictException(
+                f"Ha alcanzado el máximo de {self.MAX_ATTEMPTS} intentos permitidos"
+            ) from exc
+
         return self._build_attempt_detail(attempt)
 
     def submit_attempt(

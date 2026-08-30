@@ -33,6 +33,8 @@ export function CurriculumSidebar({
             {module.lessons.map((lesson) => {
               const isActive = lesson.id === currentLessonId;
               const isCompleted = completedLessonIds.has(lesson.id);
+              // El icono refleja el tipo de clase: video o material/documento.
+              const TypeIcon = lesson.has_video ? PlayCircle : FileText;
               return (
                 <li key={lesson.id}>
                   <Link
@@ -56,9 +58,9 @@ export function CurriculumSidebar({
                         aria-hidden="true"
                       />
                     )}
-                    <PlayCircle
+                    <TypeIcon
                       className="h-4 w-4 shrink-0 text-gray-400"
-                      aria-hidden="true"
+                      aria-label={lesson.has_video ? "Clase en video" : "Clase con material"}
                     />
                     <span className="line-clamp-2">{lesson.title}</span>
                   </Link>

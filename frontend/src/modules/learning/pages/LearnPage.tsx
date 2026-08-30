@@ -245,7 +245,7 @@ export function LearnPage() {
             </Button>
 
             {isCompleted ? (
-              <span className="flex items-center gap-2 text-sm font-medium text-green-600">
+              <span className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
                 <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
                 Clase completada
               </span>

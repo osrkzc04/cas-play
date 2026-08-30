@@ -88,11 +88,11 @@ export function AuditLogPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 text-xs uppercase text-gray-500">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Fecha</th>
-                  <th className="px-4 py-3 font-semibold">Acción</th>
-                  <th className="px-4 py-3 font-semibold">Actor</th>
-                  <th className="px-4 py-3 font-semibold">Entidad</th>
-                  <th className="px-4 py-3 font-semibold">Detalles</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Fecha</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Acción</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Actor</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Entidad</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Detalles</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

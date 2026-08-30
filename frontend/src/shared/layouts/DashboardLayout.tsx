@@ -30,6 +30,12 @@ export function DashboardLayout() {
 
   return (
     <div className="flex min-h-screen bg-surface">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
+      >
+        Saltar al contenido
+      </a>
       <aside
         className={cn(
           "hidden w-64 shrink-0 flex-col border-r border-white/10 bg-sidebar text-white/80",
@@ -134,7 +140,7 @@ export function DashboardLayout() {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        <main id="main-content" className="flex-1 p-4 sm:p-6 lg:p-8">
           <Outlet />
         </main>
       </div>

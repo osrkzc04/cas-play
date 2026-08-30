@@ -6,6 +6,7 @@ import { Alert } from "@/shared/components/Alert";
 import { Badge } from "@/shared/components/Badge";
 import { Button } from "@/shared/components/Button";
 import { Card } from "@/shared/components/Card";
+import { ConfirmDialog } from "@/shared/components/ConfirmDialog";
 import { DropdownMenu } from "@/shared/components/DropdownMenu";
 import { EmptyState } from "@/shared/components/EmptyState";
 import { PageLoader } from "@/shared/components/PageLoader";
@@ -21,6 +22,12 @@ const PAGE_SIZE = 10;
 
 export function UsersListPage() {
   const [page, setPage] = useState(1);
+  // Desactivar una cuenta es irreversible desde la UI del estudiante, así que
+  // se confirma; activar no necesita confirmación.
+  const [toDeactivate, setToDeactivate] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const skip = (page - 1) * PAGE_SIZE;
 
   const { data: users, isLoading, isError, error } = useUsers(skip, PAGE_SIZE);
@@ -64,11 +71,11 @@ export function UsersListPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
               <tr>
-                <th className="px-4 py-3 font-semibold">Nombre</th>
-                <th className="px-4 py-3 font-semibold">Correo</th>
-                <th className="px-4 py-3 font-semibold">Rol</th>
-                <th className="px-4 py-3 font-semibold">Estado</th>
-                <th className="px-4 py-3 text-right font-semibold">Acciones</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Nombre</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Correo</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Rol</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Estado</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -105,10 +112,15 @@ export function UsersListPage() {
                               setActive.isPending &&
                               setActive.variables?.id === user.id,
                             onSelect: () =>
-                              setActive.mutate({
-                                id: user.id,
-                                is_active: !user.is_active,
-                              }),
+                              user.is_active
+                                ? setToDeactivate({
+                                    id: user.id,
+                                    name: `${user.first_name} ${user.last_name}`,
+                                  })
+                                : setActive.mutate({
+                                    id: user.id,
+                                    is_active: true,
+                                  }),
                           },
                         ]}
                       />
@@ -140,6 +152,23 @@ export function UsersListPage() {
           Siguiente
         </Button>
       </nav>
+
+      <ConfirmDialog
+        open={toDeactivate !== null}
+        title="Desactivar usuario"
+        message={`¿Desactivar la cuenta de ${toDeactivate?.name}? No podrá iniciar sesión hasta que se reactive.`}
+        confirmLabel="Desactivar"
+        isLoading={setActive.isPending}
+        onConfirm={() => {
+          if (toDeactivate) {
+            setActive.mutate(
+              { id: toDeactivate.id, is_active: false },
+              { onSuccess: () => setToDeactivate(null) },
+            );
+          }
+        }}
+        onClose={() => setToDeactivate(null)}
+      />
     </section>
   );
 }

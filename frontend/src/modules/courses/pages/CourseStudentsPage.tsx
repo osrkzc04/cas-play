@@ -58,11 +58,11 @@ export function CourseStudentsPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
               <tr>
-                <th className="px-4 py-3 font-semibold">Estudiante</th>
-                <th className="px-4 py-3 font-semibold">Correo</th>
-                <th className="px-4 py-3 font-semibold">Inscrito el</th>
-                <th className="px-4 py-3 font-semibold">Clases</th>
-                <th className="w-56 px-4 py-3 font-semibold">Avance</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Estudiante</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Correo</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Inscrito el</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Clases</th>
+                <th scope="col" className="w-56 px-4 py-3 font-semibold">Avance</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

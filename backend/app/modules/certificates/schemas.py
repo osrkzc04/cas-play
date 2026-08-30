@@ -21,7 +21,7 @@ class CertificateEligibilityResponse(BaseModel):
     course_id: uuid.UUID
     total_lessons: int
     completed_lessons: int
-    # Avance del curso, solo informativo: el certificado depende del examen final.
+    # Avance del curso; debe llegar al 100% para poder emitir el certificado.
     progress_percentage: float
     # Nota de la evaluación final rendida; None si aún no la ha rendido.
     final_score: float | None

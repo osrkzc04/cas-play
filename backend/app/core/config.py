@@ -37,12 +37,13 @@ class Settings(BaseSettings):
     MAX_COVER_SIZE_MB: int = 5
     MAX_PROFILE_PHOTO_SIZE_MB: int = 2
 
-    # Base pública del servidor; el QR de los certificados codifica la URL de
-    # validación pública apuntando a esta raíz (BR-030).
+    # Base pública del servidor; raíz para servir media (portadas de curso,
+    # fotos de instructor) que el backend expone bajo /api/v1.
     PUBLIC_BASE_URL: str = "http://localhost:8000"
 
-    # Base del frontend; usada para construir enlaces dentro de los correos
-    # (login para usuarios recién creados, etc.).
+    # Base del frontend; usada para enlaces en correos (login de usuarios recién
+    # creados) y para el QR de validación pública de certificados, que apunta a
+    # la página /verify/:code del frontend (BR-030).
     FRONTEND_BASE_URL: str = "http://localhost:5173"
 
     # Configuración de correo saliente (SMTP). Cuando EMAILS_ENABLED es False

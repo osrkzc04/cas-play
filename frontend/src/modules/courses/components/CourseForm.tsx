@@ -13,6 +13,7 @@ import { Input } from "@/shared/components/Input";
 import { Select } from "@/shared/components/Select";
 import { TextArea } from "@/shared/components/TextArea";
 import { FieldError } from "@/shared/components/FieldError";
+import { UnsavedChangesPrompt } from "@/shared/components/UnsavedChangesPrompt";
 import { courseLevelOptions } from "../courseLevel";
 import { courseSchema, type CourseFormValues } from "../schemas/courseSchema";
 
@@ -219,7 +220,7 @@ export function CourseForm({
     register,
     control,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<CourseFormValues>({
     resolver: zodResolver(courseSchema),
     defaultValues: {
@@ -240,6 +241,9 @@ export function CourseForm({
       className="flex flex-col gap-6"
       noValidate
     >
+      <UnsavedChangesPrompt
+        when={(isDirty || coverFile !== null) && !isSubmitting}
+      />
       <FormSection title="Información general">
         <Input
           label="Título del curso"

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { Select } from "@/shared/components/Select";
+import { UnsavedChangesPrompt } from "@/shared/components/UnsavedChangesPrompt";
 import { getRoleLabel } from "@/shared/auth/roles";
 import {
   createUserSchema,
@@ -41,7 +42,7 @@ export function UserForm({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<UserFormValues>({
     resolver: zodResolver(schemaByMode[mode]),
     defaultValues: {
@@ -73,6 +74,7 @@ export function UserForm({
       className="flex flex-col gap-4"
       noValidate
     >
+      <UnsavedChangesPrompt when={isDirty && !isSubmitting} />
       <div className="grid gap-4 sm:grid-cols-2">
         <Input
           label="Nombre"

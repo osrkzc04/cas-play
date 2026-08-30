@@ -73,11 +73,11 @@ export function InstructorDashboard() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Curso</th>
-                  <th className="px-4 py-3 font-semibold">Estado</th>
-                  <th className="px-4 py-3 font-semibold">Matrículas</th>
-                  <th className="px-4 py-3 font-semibold">Certificados</th>
-                  <th className="px-4 py-3 font-semibold">Valoración</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Curso</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Estado</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Matrículas</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Certificados</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Valoración</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

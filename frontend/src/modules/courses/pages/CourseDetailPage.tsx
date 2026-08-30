@@ -4,6 +4,7 @@ import {
   BookOpen,
   CheckCircle2,
   Clock,
+  FileText,
   Lock,
   PlayCircle,
   Target,
@@ -239,22 +240,27 @@ export function CourseDetailPage() {
                     <ul className="divide-y divide-gray-100">
                       {module.lessons.map((lesson) => {
                         const playable = lesson.is_preview && lesson.has_video;
+                        // Clases accesibles (vista previa): icono según el tipo,
+                        // video o material. Las bloqueadas mantienen el candado.
+                        const LessonIcon = !lesson.is_preview
+                          ? Lock
+                          : lesson.has_video
+                            ? PlayCircle
+                            : FileText;
+                        const iconClass = !lesson.is_preview
+                          ? "text-gray-300"
+                          : lesson.has_video
+                            ? "text-brand-600"
+                            : "text-gray-400";
                         return (
                           <li
                             key={lesson.id}
                             className="flex items-center gap-3 px-4 py-2.5"
                           >
-                            {playable ? (
-                              <PlayCircle
-                                className="h-4 w-4 shrink-0 text-brand-600"
-                                aria-hidden="true"
-                              />
-                            ) : (
-                              <Lock
-                                className="h-4 w-4 shrink-0 text-gray-300"
-                                aria-hidden="true"
-                              />
-                            )}
+                            <LessonIcon
+                              className={`h-4 w-4 shrink-0 ${iconClass}`}
+                              aria-hidden="true"
+                            />
                             <span
                               className={`flex-1 truncate text-sm ${
                                 playable ? "text-gray-800" : "text-gray-500"

@@ -48,10 +48,10 @@ export function EnrollmentsListPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-200 text-xs uppercase text-gray-500">
               <tr>
-                <th className="px-4 py-3">Estudiante</th>
-                <th className="px-4 py-3">Correo</th>
-                <th className="px-4 py-3">Curso</th>
-                <th className="px-4 py-3">Fecha</th>
+                <th scope="col" className="px-4 py-3">Estudiante</th>
+                <th scope="col" className="px-4 py-3">Correo</th>
+                <th scope="col" className="px-4 py-3">Curso</th>
+                <th scope="col" className="px-4 py-3">Fecha</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">

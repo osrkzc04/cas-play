@@ -22,6 +22,26 @@ DEFAULT_ROLES = [
 ]
 
 
+# Cuentas de demostración para la defensa de titulación. Las contraseñas se
+# hashean directamente, por lo que no pasan por la validación de la API.
+DEMO_USERS = [
+    {
+        "role": RoleName.INSTRUCTOR.value,
+        "first_name": "Docente",
+        "last_name": "CAS",
+        "email": "docente@casplay.com",
+        "password": "docente2026_",
+    },
+    {
+        "role": RoleName.STUDENT.value,
+        "first_name": "Estudiante",
+        "last_name": "CAS",
+        "email": "estudiante@casplay.com",
+        "password": "estudiante2026_",
+    },
+]
+
+
 def seed_roles(db: Session) -> None:
     for role_data in DEFAULT_ROLES:
         exists = db.query(Role).filter(Role.name == role_data["name"]).first()
@@ -59,4 +79,33 @@ def seed_admin(db: Session) -> None:
     )
 
     db.add(admin)
+    db.commit()
+
+
+def seed_demo_users(db: Session) -> None:
+    for demo in DEMO_USERS:
+        existing = db.query(User).filter(User.email == demo["email"]).first()
+
+        if existing is not None:
+            continue
+
+        role = db.query(Role).filter(Role.name == demo["role"]).first()
+
+        if role is None:
+            raise RuntimeError(
+                f"El rol {demo['role']} no existe. Ejecute seed_roles primero."
+            )
+
+        db.add(
+            User(
+                role_id=role.id,
+                first_name=demo["first_name"],
+                last_name=demo["last_name"],
+                email=demo["email"],
+                password_hash=get_password_hash(demo["password"]),
+                is_active=True,
+                is_verified=True,
+            )
+        )
+
     db.commit()

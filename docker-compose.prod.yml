@@ -37,9 +37,11 @@ services:
       REFRESH_TOKEN_EXPIRE_DAYS: 7
       PASSWORD_RESET_TOKEN_EXPIRE_MINUTES: 15
       CORS_ORIGINS: ${CORS_ORIGINS}
-      # PUBLIC_BASE_URL debe ser el dominio del backend: el QR de los certificados
-      # codifica {PUBLIC_BASE_URL}/api/v1/certificates/verify/{code}.
+      # PUBLIC_BASE_URL: dominio del backend, raíz para servir media (portadas,
+      # fotos de instructor).
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL}
+      # FRONTEND_BASE_URL: dominio del frontend; el QR de los certificados apunta
+      # a {FRONTEND_BASE_URL}/verify/{code} (página pública de validación).
       FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
       MEDIA_ROOT: storage
       EMAILS_ENABLED: "true"

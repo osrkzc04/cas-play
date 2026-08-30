@@ -1,4 +1,9 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import {
+  createBrowserRouter,
+  createRoutesFromElements,
+  Navigate,
+  Route,
+} from "react-router-dom";
 
 import { AuthLayout } from "@/shared/layouts/AuthLayout";
 import { DashboardLayout } from "@/shared/layouts/DashboardLayout";
@@ -35,9 +40,11 @@ import { AdminCertificatesListPage } from "@/modules/certificates/pages/AdminCer
 import { AdminRatingsListPage } from "@/modules/ratings/pages/AdminRatingsListPage";
 import { InstructorProfilePage } from "@/modules/instructor-profile/pages/InstructorProfilePage";
 
-export function AppRoutes() {
-  return (
-    <Routes>
+// Data router (createBrowserRouter): habilita `useBlocker` para bloquear la
+// navegación interna con cambios sin guardar (ver UnsavedChangesPrompt).
+export const router = createBrowserRouter(
+  createRoutesFromElements(
+    <Route>
       {/* La página comercial es externa: dentro del app todo exige login.
           La raíz lleva al dashboard; si no hay sesión, PrivateRoute deriva al login. */}
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -156,6 +163,6 @@ export function AppRoutes() {
 
       <Route path="/forbidden" element={<ForbiddenPage />} />
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
-  );
-}
+    </Route>,
+  ),
+);

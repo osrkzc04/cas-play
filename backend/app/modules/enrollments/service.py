@@ -1,6 +1,7 @@
 import math
 import uuid
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.email import build_welcome_email, send_email
@@ -46,10 +47,17 @@ class EnrollmentService:
         if self.enrollment_repository.exists(current_user.id, course_id):
             raise ConflictException("Ya se encuentra matriculado en este curso")
 
-        enrollment = self.enrollment_repository.create(
-            user_id=current_user.id,
-            course_id=course_id,
-        )
+        try:
+            enrollment = self.enrollment_repository.create(
+                user_id=current_user.id,
+                course_id=course_id,
+            )
+        except IntegrityError as exc:
+            # Carrera con otra matrícula simultánea del mismo curso.
+            self.enrollment_repository.db.rollback()
+            raise ConflictException(
+                "Ya se encuentra matriculado en este curso"
+            ) from exc
 
         self.audit.record(
             action=AuditAction.ENROLLMENT_CREATED,
@@ -139,10 +147,16 @@ class EnrollmentService:
         if self.enrollment_repository.exists(user.id, course.id):
             raise ConflictException("El estudiante ya se encuentra matriculado en este curso")
 
-        enrollment = self.enrollment_repository.create(
-            user_id=user.id,
-            course_id=course.id,
-        )
+        try:
+            enrollment = self.enrollment_repository.create(
+                user_id=user.id,
+                course_id=course.id,
+            )
+        except IntegrityError as exc:
+            self.enrollment_repository.db.rollback()
+            raise ConflictException(
+                "El estudiante ya se encuentra matriculado en este curso"
+            ) from exc
 
         self.audit.record(
             action=AuditAction.ENROLLMENT_CREATED,

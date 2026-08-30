@@ -7,7 +7,9 @@ import {
   Badge,
   Button,
   Card,
+  ConfirmDialog,
   PageLoader,
+  UnsavedChangesPrompt,
 } from "@/shared/components";
 import { getApiErrorMessage } from "@/shared/lib/errors";
 import { useCurriculum } from "@/modules/curriculum/hooks/useCurriculum";
@@ -32,6 +34,7 @@ export function EvaluationAttemptPage() {
   const [mode, setMode] = useState<Mode>("intro");
   const [attempt, setAttempt] = useState<AttemptDetail | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [confirmIncomplete, setConfirmIncomplete] = useState(false);
 
   const curriculumQuery = useCurriculum(courseId);
   const evaluation = curriculumQuery.data?.final_evaluation ?? null;
@@ -43,10 +46,17 @@ export function EvaluationAttemptPage() {
   const reviewAttempt = useReviewAttempt();
 
   const previousAttempts = attemptsQuery.data ?? [];
+  // Un intento sin enviar puede reanudarse tras una recarga: el backend lo
+  // devuelve en lugar de consumir un intento nuevo (ver EvaluationService).
+  const inProgressAttempt = previousAttempts.find(
+    (a) => a.status === "IN_PROGRESS",
+  );
+  const hasInProgress = Boolean(inProgressAttempt);
   const usedAttempts = previousAttempts.length;
   const hasPassed = previousAttempts.some((a) => a.passed);
   const remaining = Math.max(0, MAX_ATTEMPTS - usedAttempts);
-  const canStart = !hasPassed && remaining > 0;
+  // Reanudar siempre es posible aunque ya no queden intentos disponibles.
+  const canStart = !hasPassed && (hasInProgress || remaining > 0);
 
   const backLink = `/courses/${courseId}/learn/${
     curriculumQuery.data?.modules[0]?.lessons[0]?.id ?? ""
@@ -106,6 +116,12 @@ export function EvaluationAttemptPage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-3xl space-y-6 px-4 py-8">
+      {/* Bloquea la salida mientras se rinde para no perder las respuestas
+          (viven en estado local hasta el envío; ver AUDIT_UX #3). */}
+      <UnsavedChangesPrompt
+        when={mode === "taking"}
+        message="Si sales ahora, perderás las respuestas de este intento en curso."
+      />
       <Link
         to={backLink}
         className="flex items-center gap-2 text-sm font-medium text-brand-600 hover:underline"
@@ -144,7 +160,9 @@ export function EvaluationAttemptPage() {
                       <span className="font-medium text-gray-900">
                         {a.score ?? "—"}/10
                       </span>
-                      {a.passed ? (
+                      {a.status === "IN_PROGRESS" ? (
+                        <Badge tone="info">En curso</Badge>
+                      ) : a.passed ? (
                         <Badge tone="success">Aprobado</Badge>
                       ) : (
                         <Badge tone="neutral">No aprobado</Badge>
@@ -179,7 +197,13 @@ export function EvaluationAttemptPage() {
               Ya aprobaste esta evaluación. ¡Felicitaciones!
             </Alert>
           )}
-          {!hasPassed && remaining === 0 && (
+          {!hasPassed && hasInProgress && (
+            <Alert tone="info">
+              Tienes un intento sin enviar. Reanúdalo para continuar; deberás
+              seleccionar tus respuestas nuevamente.
+            </Alert>
+          )}
+          {!hasPassed && !hasInProgress && remaining === 0 && (
             <Alert tone="warning">
               Has agotado tus {MAX_ATTEMPTS} intentos para esta evaluación.
             </Alert>
@@ -198,7 +222,7 @@ export function EvaluationAttemptPage() {
             isLoading={startAttempt.isPending}
             disabled={!canStart || !evaluation?.is_ready}
           >
-            Comenzar evaluación
+            {hasInProgress ? "Reanudar intento" : "Comenzar evaluación"}
           </Button>
         </div>
       )}
@@ -223,12 +247,33 @@ export function EvaluationAttemptPage() {
             <Alert tone="error">{getApiErrorMessage(submitAttempt.error)}</Alert>
           )}
           <Button
-            onClick={handleSubmit}
+            onClick={() =>
+              answeredCount < attempt.questions.length
+                ? setConfirmIncomplete(true)
+                : handleSubmit()
+            }
             isLoading={submitAttempt.isPending}
             className="w-full"
           >
             Enviar respuestas
           </Button>
+
+          <ConfirmDialog
+            open={confirmIncomplete}
+            title="Enviar con preguntas sin responder"
+            message={`Tienes ${
+              attempt.questions.length - answeredCount
+            } de ${attempt.questions.length} preguntas sin responder. Las no respondidas contarán como incorrectas. ¿Enviar de todos modos?`}
+            confirmLabel="Enviar de todos modos"
+            cancelLabel="Seguir respondiendo"
+            tone="primary"
+            isLoading={submitAttempt.isPending}
+            onConfirm={() => {
+              setConfirmIncomplete(false);
+              handleSubmit();
+            }}
+            onClose={() => setConfirmIncomplete(false)}
+          />
         </div>
       )}
 
@@ -236,9 +281,15 @@ export function EvaluationAttemptPage() {
         <div className="space-y-4">
           <Card className="flex flex-col items-center gap-2 p-6 text-center">
             {attempt.passed ? (
-              <CheckCircle2 className="h-12 w-12 text-green-600" aria-hidden="true" />
+              <CheckCircle2
+                className="h-12 w-12 text-green-600 dark:text-green-400"
+                aria-hidden="true"
+              />
             ) : (
-              <XCircle className="h-12 w-12 text-brand-600" aria-hidden="true" />
+              <XCircle
+                className="h-12 w-12 text-brand-600 dark:text-brand-400"
+                aria-hidden="true"
+              />
             )}
             <p className="text-3xl font-bold text-gray-900">
               {attempt.score}/10

@@ -92,12 +92,12 @@ export function AdminCertificatesListPage() {
             <table className="w-full text-left text-sm">
               <thead className="border-b border-gray-200 text-xs uppercase text-gray-500">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">Estudiante</th>
-                  <th className="px-4 py-3 font-semibold">Curso</th>
-                  <th className="px-4 py-3 font-semibold">Código</th>
-                  <th className="px-4 py-3 font-semibold">Nota final</th>
-                  <th className="px-4 py-3 font-semibold">Emitido</th>
-                  <th className="px-4 py-3 font-semibold">Acciones</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Estudiante</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Curso</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Código</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Nota final</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Emitido</th>
+                  <th scope="col" className="px-4 py-3 font-semibold">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">

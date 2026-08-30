@@ -7,7 +7,7 @@ from app.core.config import settings
 from app.core.email import build_password_reset_email, send_email
 from app.core.exceptions import BadRequestException, UnauthorizedException
 from app.core.jwt import create_access_token, create_refresh_token, decode_token
-from app.core.security import get_password_hash, verify_password
+from app.core.security import get_password_hash, needs_rehash, verify_password
 from app.modules.audit.service import AuditService
 from app.modules.auth.repository import (
     PasswordResetTokenRepository,
@@ -62,6 +62,12 @@ class AuthService:
                 details={"email": login_data.email, "reason": "inactive"},
             )
             raise UnauthorizedException("El usuario se encuentra inactivo")
+
+        # Migración transparente de hashes legacy (bcrypt) al esquema vigente
+        # (bcrypt_sha256), aprovechando que aquí se dispone de la contraseña.
+        if needs_rehash(user.password_hash):
+            user.password_hash = get_password_hash(login_data.password)
+            self.db.commit()
 
         access_token = create_access_token(
             subject=user.id,

@@ -5,6 +5,7 @@ import { Briefcase, Camera, Video } from "lucide-react";
 import { Button } from "@/shared/components/Button";
 import { Input } from "@/shared/components/Input";
 import { TextArea } from "@/shared/components/TextArea";
+import { UnsavedChangesPrompt } from "@/shared/components/UnsavedChangesPrompt";
 import {
   instructorProfileSchema,
   type InstructorProfileFormValues,
@@ -24,7 +25,7 @@ export function ProfileForm({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<InstructorProfileFormValues>({
     resolver: zodResolver(instructorProfileSchema),
     defaultValues: {
@@ -43,6 +44,7 @@ export function ProfileForm({
       className="flex flex-col gap-5"
       noValidate
     >
+      <UnsavedChangesPrompt when={isDirty && !isSubmitting} />
       <Input
         label="Titular"
         placeholder="Ej. Chef pastelera · 10 años de experiencia"
@@ -75,6 +77,8 @@ export function ProfileForm({
           <div className="flex-1">
             <Input
               label="LinkedIn"
+              type="url"
+              inputMode="url"
               placeholder="https://www.linkedin.com/in/tu-perfil"
               error={errors.linkedin?.message}
               {...register("linkedin")}
@@ -89,6 +93,8 @@ export function ProfileForm({
           <div className="flex-1">
             <Input
               label="Instagram"
+              type="url"
+              inputMode="url"
               placeholder="https://www.instagram.com/tu-usuario"
               error={errors.instagram?.message}
               {...register("instagram")}
@@ -103,6 +109,8 @@ export function ProfileForm({
           <div className="flex-1">
             <Input
               label="YouTube"
+              type="url"
+              inputMode="url"
               placeholder="https://www.youtube.com/@tu-canal"
               error={errors.youtube?.message}
               {...register("youtube")}

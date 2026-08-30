@@ -1,0 +1,626 @@
+{
+  "info": {
+    "_postman_id": "ca5e2e00-0000-4000-8000-ca5e2e00f10w",
+    "name": "CAS — Flujo E2E (funcional)",
+    "description": "Flujo funcional representativo de la plataforma CAS.\n\nCurso publicado -> estudiante se matricula -> accede al contenido -> registra progreso -> realiza la evaluación -> obtiene calificación -> emite el certificado -> verifica y valora.\n\nEjecutar con el Collection Runner (algunos pasos encadenan variables y el banco de preguntas se crea en bucle). Requiere el backend corriendo y los usuarios semilla: admin@casplay.com, docente@casplay.com, estudiante@casplay.com.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "Login Instructor",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('instructor_token', d.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{instructor_email}}\",\n  \"password\": \"{{instructor_password}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('admin_token', d.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login Estudiante",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('student_token', d.access_token);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{student_password}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Curso y contenido (Instructor)",
+      "item": [
+        {
+          "name": "Crear curso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('course_id', d.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{instructor_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Curso E2E Postman\",\n  \"summary\": \"Curso de demostración del flujo funcional\",\n  \"level\": \"BEGINNER\",\n  \"duration_hours\": 4\n}"
+            },
+            "url": { "raw": "{{base_url}}/courses", "host": ["{{base_url}}"], "path": ["courses"] }
+          }
+        },
+        {
+          "name": "Publicar curso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('Estado PUBLISHED', () => pm.expect(d.status).to.eql('PUBLISHED'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{instructor_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/publish",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "publish"]
+            }
+          }
+        },
+        {
+          "name": "Crear módulo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('module_id', d.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{instructor_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Módulo 1\"\n}" },
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/modules",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "modules"]
+            }
+          }
+        },
+        {
+          "name": "Crear clase",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('lesson_id', d.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{instructor_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Clase 1\",\n  \"is_preview\": false\n}" },
+            "url": {
+              "raw": "{{base_url}}/modules/{{module_id}}/lessons",
+              "host": ["{{base_url}}"],
+              "path": ["modules", "{{module_id}}", "lessons"]
+            }
+          }
+        },
+        {
+          "name": "Crear evaluación",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": ["pm.collectionVariables.set('q_index', 0);"],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('evaluation_id', d.id);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{instructor_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Evaluación final\"\n}" },
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/evaluation",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "evaluation"]
+            }
+          }
+        },
+        {
+          "name": "Agregar pregunta (bucle x20)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "let i = parseInt(pm.collectionVariables.get('q_index')) + 1;",
+                  "pm.collectionVariables.set('q_index', i);",
+                  "// El banco requiere 20 preguntas (BR-021); se repite el request.",
+                  "if (i < 20) { postman.setNextRequest('Agregar pregunta (bucle x20)'); }",
+                  "else { postman.setNextRequest(null); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{instructor_token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"statement\": \"Pregunta {{q_index}}\",\n  \"question_type\": \"MULTIPLE_CHOICE\",\n  \"options\": [\n    { \"text\": \"Correcta\", \"is_correct\": true },\n    { \"text\": \"Incorrecta\", \"is_correct\": false }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/evaluations/{{evaluation_id}}/questions",
+              "host": ["{{base_url}}"],
+              "path": ["evaluations", "{{evaluation_id}}", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Obtener evaluación (mapa de respuestas correctas)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('Banco completo (20)', () => pm.expect(d.question_count).to.eql(20));",
+                  "// Mapa option_id -> correcta, para responder el intento con nota máxima.",
+                  "let correct = {};",
+                  "d.questions.forEach(q => q.options.forEach(o => { if (o.is_correct) correct[o.id] = true; }));",
+                  "pm.collectionVariables.set('correct_options', JSON.stringify(correct));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{instructor_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/evaluation",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "evaluation"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Matrícula y consumo (Estudiante)",
+      "item": [
+        {
+          "name": "Matricularse en el curso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 Created o 409 (ya matriculado)', () => pm.expect([201, 409]).to.include(pm.response.code));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/enroll",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "enroll"]
+            }
+          }
+        },
+        {
+          "name": "Acceder al contenido (detalle del curso)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Registrar progreso (completar clase)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('Clase completada', () => pm.expect(d.is_completed).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/lessons/{{lesson_id}}/progress/complete",
+              "host": ["{{base_url}}"],
+              "path": ["lessons", "{{lesson_id}}", "progress", "complete"]
+            }
+          }
+        },
+        {
+          "name": "Ver progreso del curso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('Progreso 100%', () => pm.expect(d.percentage).to.eql(100));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/progress",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "progress"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Evaluación (Estudiante)",
+      "item": [
+        {
+          "name": "Iniciar intento",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('10 preguntas', () => pm.expect(d.questions.length).to.eql(10));",
+                  "pm.collectionVariables.set('attempt_id', d.id);",
+                  "const correct = JSON.parse(pm.collectionVariables.get('correct_options') || '{}');",
+                  "const answers = d.questions.map(q => {",
+                  "  const opt = q.options.find(o => correct[o.id]) || q.options[0];",
+                  "  return { question_id: q.id, selected_option_id: opt.id };",
+                  "});",
+                  "pm.collectionVariables.set('attempt_answers', JSON.stringify(answers));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/evaluations/{{evaluation_id}}/attempts",
+              "host": ["{{base_url}}"],
+              "path": ["evaluations", "{{evaluation_id}}", "attempts"]
+            }
+          }
+        },
+        {
+          "name": "Enviar intento (calificación)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('Nota 10 y aprobado', () => { pm.expect(d.score).to.eql(10); pm.expect(d.passed).to.be.true; });"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{student_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"answers\": {{attempt_answers}}\n}" },
+            "url": {
+              "raw": "{{base_url}}/attempts/{{attempt_id}}/submit",
+              "host": ["{{base_url}}"],
+              "path": ["attempts", "{{attempt_id}}", "submit"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Certificado (Estudiante)",
+      "item": [
+        {
+          "name": "Consultar elegibilidad",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('Elegible', () => pm.expect(d.is_eligible).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/certificate/eligibility",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "certificate", "eligibility"]
+            }
+          }
+        },
+        {
+          "name": "Emitir certificado",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('201 o 409 (ya emitido)', () => pm.expect([201, 409]).to.include(pm.response.code));",
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('certificate_code', d.code);",
+                  "  pm.collectionVariables.set('certificate_id', d.id);",
+                  "  pm.test('Código con formato CAS-', () => pm.expect(d.code).to.match(/^CAS-/));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{student_token}}" }],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/certificate",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "certificate"]
+            }
+          }
+        },
+        {
+          "name": "Verificar certificado (público)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('Certificado válido', () => pm.expect(d.is_valid).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/certificates/verify/{{certificate_code}}",
+              "host": ["{{base_url}}"],
+              "path": ["certificates", "verify", "{{certificate_code}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Valoración (Estudiante)",
+      "item": [
+        {
+          "name": "Valorar curso",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('201 o 409 (ya valorado)', () => pm.expect([201, 409]).to.include(pm.response.code));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{student_token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"score\": 5,\n  \"comment\": \"Excelente curso de demostración\"\n}" },
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/rating",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "rating"]
+            }
+          }
+        },
+        {
+          "name": "Resumen de valoraciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const d = pm.response.json();",
+                  "pm.test('Al menos una valoración', () => pm.expect(d.total).to.be.at.least(1));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/courses/{{course_id}}/ratings/summary",
+              "host": ["{{base_url}}"],
+              "path": ["courses", "{{course_id}}", "ratings", "summary"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
+    { "key": "admin_email", "value": "admin@casplay.com" },
+    { "key": "admin_password", "value": "Admin12345" },
+    { "key": "instructor_email", "value": "docente@casplay.com" },
+    { "key": "instructor_password", "value": "docente2026_" },
+    { "key": "student_email", "value": "estudiante@casplay.com" },
+    { "key": "student_password", "value": "estudiante2026_" },
+    { "key": "instructor_token", "value": "" },
+    { "key": "admin_token", "value": "" },
+    { "key": "student_token", "value": "" },
+    { "key": "course_id", "value": "" },
+    { "key": "module_id", "value": "" },
+    { "key": "lesson_id", "value": "" },
+    { "key": "evaluation_id", "value": "" },
+    { "key": "attempt_id", "value": "" },
+    { "key": "attempt_answers", "value": "" },
+    { "key": "correct_options", "value": "" },
+    { "key": "certificate_code", "value": "" },
+    { "key": "certificate_id", "value": "" },
+    { "key": "q_index", "value": "0" }
+  ]
+}

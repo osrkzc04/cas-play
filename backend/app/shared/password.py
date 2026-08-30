@@ -7,9 +7,11 @@ from app.core.exceptions import BadRequestException
 # (frontend/src/modules/auth/schemas/passwordPolicy.ts).
 PASSWORD_MIN_LENGTH = 8
 PASSWORD_MAX_LENGTH = 128
-PASSWORD_SPECIAL_CHARS = "@!$%&*"
+# Se admite cualquier símbolo (carácter no alfanumérico, excluyendo espacios); no
+# se limita a un conjunto fijo. El hint solo orienta con ejemplos al usuario.
+PASSWORD_SPECIAL_HINT = "@ # $ % & * ! ? . -"
 
-_SPECIAL_PATTERN = re.compile(r"[@!$%&*]")
+_SPECIAL_PATTERN = re.compile(r"[^A-Za-z0-9\s]")
 
 
 def validate_password_strength(password: str) -> None:
@@ -30,7 +32,7 @@ def validate_password_strength(password: str) -> None:
     if not re.search(r"[0-9]", password):
         missing.append("un número")
     if not _SPECIAL_PATTERN.search(password):
-        missing.append(f"un símbolo ({PASSWORD_SPECIAL_CHARS})")
+        missing.append(f"un símbolo (p. ej. {PASSWORD_SPECIAL_HINT})")
 
     if missing:
         raise BadRequestException(

@@ -114,10 +114,10 @@ export function ManageCoursesPage() {
           <table className="w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wider text-gray-500">
               <tr>
-                <th className="px-4 py-3 font-semibold">Título</th>
-                <th className="px-4 py-3 font-semibold">Estado</th>
-                <th className="px-4 py-3 font-semibold">Actualizado</th>
-                <th className="px-4 py-3 text-right font-semibold">Acciones</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Título</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Estado</th>
+                <th scope="col" className="px-4 py-3 font-semibold">Actualizado</th>
+                <th scope="col" className="px-4 py-3 text-right font-semibold">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
