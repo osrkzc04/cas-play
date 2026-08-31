@@ -86,8 +86,18 @@ axiosClient.interceptors.response.use(
         `Bearer ${newToken}`;
       return axiosClient(original);
     } catch (refreshError) {
-      tokenStorage.clear();
-      onAuthFailure?.();
+      // Solo cerrar la sesión si el backend rechaza explícitamente el refresh
+      // token (401 = inválido o expirado). Un fallo transitorio (red, 5xx, 502
+      // por reinicio del backend) NO debe expulsar al usuario: se conservan los
+      // tokens para que el siguiente intento reintente.
+      const refreshStatus =
+        refreshError instanceof AxiosError
+          ? refreshError.response?.status
+          : undefined;
+      if (refreshStatus === 401) {
+        tokenStorage.clear();
+        onAuthFailure?.();
+      }
       return Promise.reject(refreshError);
     }
   },

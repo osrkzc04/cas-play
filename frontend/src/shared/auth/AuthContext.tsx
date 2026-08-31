@@ -1,3 +1,4 @@
+import { AxiosError } from "axios";
 import {
   createContext,
   useCallback,
@@ -58,10 +59,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return;
     }
-    fetchCurrentUser()
-      .then(setUser)
-      .catch(() => clearSession())
-      .finally(() => setIsLoading(false));
+
+    let cancelled = false;
+
+    // Solo se cierra la sesión si el backend rechaza el token (401). Ante un
+    // fallo transitorio (red, 5xx, 502 por reinicio del backend) se reintenta
+    // con backoff y se conservan los tokens, para no expulsar al usuario
+    // mientras la sesión sigue siendo válida.
+    const loadUser = async () => {
+      const delays = [0, 1000, 3000];
+      for (let attempt = 0; attempt < delays.length; attempt += 1) {
+        if (delays[attempt] > 0) {
+          await new Promise((resolve) => setTimeout(resolve, delays[attempt]));
+        }
+        if (cancelled) return;
+        try {
+          const currentUser = await fetchCurrentUser();
+          if (!cancelled) setUser(currentUser);
+          return;
+        } catch (error) {
+          const status =
+            error instanceof AxiosError ? error.response?.status : undefined;
+          if (status === 401) {
+            if (!cancelled) clearSession();
+            return;
+          }
+          // Fallo transitorio: reintentar sin borrar la sesión.
+        }
+      }
+    };
+
+    loadUser().finally(() => {
+      if (!cancelled) setIsLoading(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [clearSession]);
 
   const login = useCallback(async (input: LoginInput): Promise<AuthUser> => {
