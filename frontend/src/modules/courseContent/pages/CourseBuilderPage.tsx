@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ClipboardList, Layers, Plus } from "lucide-react";
+import { ClipboardList, Eye, Layers, Plus } from "lucide-react";
 
 import {
   Alert,
@@ -54,6 +54,12 @@ export function CourseBuilderPage() {
           <div className="flex gap-2">
             <Link to="/dashboard/courses">
               <Button variant="secondary">Volver</Button>
+            </Link>
+            <Link to={`/dashboard/courses/${id}/preview`}>
+              <Button variant="secondary">
+                <Eye className="h-4 w-4" />
+                Ver como estudiante
+              </Button>
             </Link>
             <Link to={`/dashboard/courses/${id}/evaluation`}>
               <Button variant="secondary">

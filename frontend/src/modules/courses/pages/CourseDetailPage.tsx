@@ -4,6 +4,7 @@ import {
   BookOpen,
   CheckCircle2,
   Clock,
+  Eye,
   FileText,
   Lock,
   PlayCircle,
@@ -328,10 +329,21 @@ export function CourseDetailPage() {
           )}
 
           {!isStudent && (
-            <p className="text-sm text-gray-500">
-              Vista previa del curso. La inscripción está disponible para
-              estudiantes.
-            </p>
+            <>
+              <p className="text-sm text-gray-500">
+                Vista previa del curso. La inscripción está disponible para
+                estudiantes.
+              </p>
+              <Link
+                to={`/dashboard/courses/${course.id}/preview`}
+                className="block"
+              >
+                <Button variant="outline" className="w-full">
+                  <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
+                  Ver como estudiante
+                </Button>
+              </Link>
+            </>
           )}
 
           {isStudent && !isEnrolled && (

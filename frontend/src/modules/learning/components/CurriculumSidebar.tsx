@@ -13,6 +13,10 @@ interface CurriculumSidebarProps {
   finalEvaluation: CurriculumEvaluation | null;
   currentLessonId: string | undefined;
   completedLessonIds: Set<string>;
+  // Ruta base de las clases; difiere en la vista previa del staff.
+  lessonBasePath?: string;
+  // La vista previa del staff no incluye el intento de evaluación final.
+  hideExam?: boolean;
 }
 
 export function CurriculumSidebar({
@@ -21,6 +25,8 @@ export function CurriculumSidebar({
   finalEvaluation,
   currentLessonId,
   completedLessonIds,
+  lessonBasePath = `/courses/${courseId}/learn`,
+  hideExam = false,
 }: CurriculumSidebarProps) {
   return (
     <nav className="space-y-5">
@@ -38,7 +44,7 @@ export function CurriculumSidebar({
               return (
                 <li key={lesson.id}>
                   <Link
-                    to={`/courses/${courseId}/learn/${lesson.id}`}
+                    to={`${lessonBasePath}/${lesson.id}`}
                     className={cn(
                       "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition",
                       isActive
@@ -71,7 +77,7 @@ export function CurriculumSidebar({
         </div>
       ))}
 
-      {finalEvaluation && (
+      {finalEvaluation && !hideExam && (
         <div className="border-t border-gray-200 pt-4">
           <Link
             to={`/courses/${courseId}/exam`}

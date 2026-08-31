@@ -30,6 +30,7 @@ import { DashboardPage } from "@/modules/dashboard/pages/DashboardPage";
 import { AuditLogPage } from "@/modules/audit/pages/AuditLogPage";
 import { StyleGuidePage } from "@/modules/styleguide/pages/StyleGuidePage";
 import { LearnPage } from "@/modules/learning/pages/LearnPage";
+import { CoursePreviewEntry } from "@/modules/learning/pages/CoursePreviewEntry";
 import { EvaluationAttemptPage } from "@/modules/evaluations/pages/EvaluationAttemptPage";
 import { MyCoursesPage } from "@/modules/enrollments/pages/MyCoursesPage";
 import { EnrollmentsListPage } from "@/modules/enrollments/pages/EnrollmentsListPage";
@@ -75,6 +76,19 @@ export const router = createBrowserRouter(
           <Route
             path="/courses/:courseId/exam"
             element={<EvaluationAttemptPage />}
+          />
+        </Route>
+
+        {/* Vista previa del staff: reutiliza el reproductor del estudiante en
+            solo lectura, a pantalla completa (fuera del shell del panel). */}
+        <Route element={<RoleRoute roles={STAFF_ROLES} />}>
+          <Route
+            path="/dashboard/courses/:courseId/preview"
+            element={<CoursePreviewEntry />}
+          />
+          <Route
+            path="/dashboard/courses/:courseId/preview/:lessonId"
+            element={<LearnPage preview />}
           />
         </Route>
 

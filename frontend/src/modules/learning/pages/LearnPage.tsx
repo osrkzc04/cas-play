@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Eye,
   Maximize2,
   Minimize2,
 } from "lucide-react";
@@ -33,7 +34,13 @@ import {
   useSaveLastSecond,
 } from "../hooks/useProgress";
 
-export function LearnPage() {
+interface LearnPageProps {
+  // En modo preview (staff "Ver como estudiante") se reutiliza el reproductor
+  // del estudiante en solo lectura: sin escrituras de progreso ni certificado.
+  preview?: boolean;
+}
+
+export function LearnPage({ preview = false }: LearnPageProps = {}) {
   const { courseId, lessonId } = useParams<{
     courseId: string;
     lessonId: string;
@@ -43,11 +50,24 @@ export function LearnPage() {
   const [wide, setWide] = useState(false);
   const materialsAnchorId = "lesson-materials";
 
+  // Rutas base según el contexto: el estudiante navega en /courses/.../learn;
+  // el staff en la ruta de vista previa del panel.
+  const lessonBasePath = preview
+    ? `/dashboard/courses/${courseId}/preview`
+    : `/courses/${courseId}/learn`;
+  const backTo = preview
+    ? `/dashboard/courses/${courseId}/content`
+    : `/courses/${courseId}`;
+
   const { user } = useAuth();
   const courseQuery = useCourse(courseId);
   const curriculumQuery = useCurriculum(courseId);
-  const progressQuery = useCourseProgress(courseId);
-  const eligibilityQuery = useCertificateEligibility(courseId, user?.role);
+  const progressQuery = useCourseProgress(courseId, !preview);
+  const eligibilityQuery = useCertificateEligibility(
+    courseId,
+    user?.role,
+    !preview,
+  );
   const isFinished = eligibilityQuery.data
     ? isCourseFinished(eligibilityQuery.data)
     : false;
@@ -94,18 +114,17 @@ export function LearnPage() {
     return (
       <div className="mx-auto max-w-2xl space-y-4 p-6">
         <Alert tone="error">{getApiErrorMessage(curriculumQuery.error)}</Alert>
-        <Link to={`/courses/${courseId}`}>
-          <Button variant="outline">Volver al curso</Button>
+        <Link to={backTo}>
+          <Button variant="outline">Volver</Button>
         </Link>
       </div>
     );
   }
 
-  const goToLesson = (id: string) =>
-    navigate(`/courses/${courseId}/learn/${id}`);
+  const goToLesson = (id: string) => navigate(`${lessonBasePath}/${id}`);
 
   const handleComplete = () => {
-    if (!lessonId) {
+    if (!lessonId || preview) {
       return;
     }
     completeLesson.mutate(lessonId, {
@@ -124,25 +143,33 @@ export function LearnPage() {
       <header className="border-b border-gray-200 bg-card">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
           <Link
-            to={`/courses/${courseId}`}
+            to={backTo}
             className="flex items-center gap-2 text-sm font-medium text-brand-600 hover:underline"
           >
             <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            {courseQuery.data?.title ?? "Volver al curso"}
+            {courseQuery.data?.title ?? "Volver"}
           </Link>
           <div className="flex items-center gap-4">
-            {isFinished && (
+            {preview && (
+              <Badge tone="info" className="inline-flex items-center gap-1">
+                <Eye className="h-3.5 w-3.5" aria-hidden="true" />
+                Vista previa del estudiante
+              </Badge>
+            )}
+            {!preview && isFinished && (
               <Badge tone="success" className="inline-flex items-center gap-1">
                 <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
                 Curso finalizado
               </Badge>
             )}
-            <div className="hidden w-48 items-center gap-2 sm:flex">
-              <ProgressBar value={percentage} className="flex-1" />
-              <span className="text-xs font-medium text-gray-500">
-                {Math.round(percentage)}%
-              </span>
-            </div>
+            {!preview && (
+              <div className="hidden w-48 items-center gap-2 sm:flex">
+                <ProgressBar value={percentage} className="flex-1" />
+                <span className="text-xs font-medium text-gray-500">
+                  {Math.round(percentage)}%
+                </span>
+              </div>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -169,7 +196,13 @@ export function LearnPage() {
         )}
       >
         <main className="space-y-5">
-          {isFinished && (
+          {preview && (
+            <Alert tone="info">
+              Estás viendo el curso como lo verá el estudiante. El progreso no
+              se guarda en este modo.
+            </Alert>
+          )}
+          {!preview && isFinished && (
             <Alert tone="success">
               ¡Felicitaciones! Completaste el contenido y aprobaste la
               evaluación final de este curso.
@@ -181,11 +214,15 @@ export function LearnPage() {
                 lessonId={currentLesson.id}
                 initialSecond={lessonProgress?.last_second ?? 0}
                 onSaveProgress={(second) =>
+                  !preview &&
                   lessonId &&
                   saveLastSecond.mutate({ lessonId, lastSecond: second })
                 }
                 onEnded={() =>
-                  lessonId && !isCompleted && completeLesson.mutate(lessonId)
+                  !preview &&
+                  lessonId &&
+                  !isCompleted &&
+                  completeLesson.mutate(lessonId)
                 }
               />
             ) : (
@@ -230,7 +267,7 @@ export function LearnPage() {
             )}
           </div>
 
-          {completeLesson.isError && (
+          {!preview && completeLesson.isError && (
             <Alert tone="error">{getApiErrorMessage(completeLesson.error)}</Alert>
           )}
 
@@ -244,19 +281,20 @@ export function LearnPage() {
               Anterior
             </Button>
 
-            {isCompleted ? (
-              <span className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
-                <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
-                Clase completada
-              </span>
-            ) : (
-              <Button
-                onClick={handleComplete}
-                isLoading={completeLesson.isPending}
-              >
-                Marcar como completada
-              </Button>
-            )}
+            {!preview &&
+              (isCompleted ? (
+                <span className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+                  <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
+                  Clase completada
+                </span>
+              ) : (
+                <Button
+                  onClick={handleComplete}
+                  isLoading={completeLesson.isPending}
+                >
+                  Marcar como completada
+                </Button>
+              ))}
 
             <Button
               variant="outline"
@@ -286,6 +324,8 @@ export function LearnPage() {
               finalEvaluation={curriculumQuery.data?.final_evaluation ?? null}
               currentLessonId={lessonId}
               completedLessonIds={completedLessonIds}
+              lessonBasePath={lessonBasePath}
+              hideExam={preview}
             />
           </aside>
         )}

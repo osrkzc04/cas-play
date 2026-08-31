@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
+  Eye,
   EyeOff,
   Flag,
   Layers,
@@ -144,6 +145,12 @@ export function ManageCoursesPage() {
                             label: "Contenido",
                             icon: Layers,
                             to: `/dashboard/courses/${course.id}/content`,
+                          },
+                          {
+                            key: "preview",
+                            label: "Ver como estudiante",
+                            icon: Eye,
+                            to: `/dashboard/courses/${course.id}/preview`,
                           },
                           {
                             key: "students",
