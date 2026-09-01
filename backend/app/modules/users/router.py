@@ -100,3 +100,16 @@ def update_user(
 ):
     service = UserService(db)
     return service.update_user(user_id, user_data, actor=current_user)
+
+
+@router.post(
+    "/{user_id}/reset-password",
+    response_model=UserResponse,
+)
+def reset_user_password(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user=Depends(require_admin),
+):
+    service = UserService(db)
+    return service.reset_password(user_id, actor=current_user)

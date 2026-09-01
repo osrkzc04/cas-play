@@ -44,6 +44,13 @@ export const userService = {
     return data;
   },
 
+  async resetPassword(id: string): Promise<ManagedUser> {
+    const { data } = await axiosClient.post<ManagedUser>(
+      endpoints.users.resetPassword(id),
+    );
+    return data;
+  },
+
   async getRoles(): Promise<UserRole[]> {
     const { data } = await axiosClient.get<UserRole[]>(endpoints.users.roles);
     return data;

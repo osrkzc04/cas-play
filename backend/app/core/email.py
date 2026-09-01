@@ -208,6 +208,45 @@ def build_welcome_email(first_name: str, email: str, temporary_password: str) ->
     )
 
 
+def build_admin_password_reset_email(
+    first_name: str,
+    email: str,
+    temporary_password: str,
+) -> str:
+    # Restablecimiento iniciado por un administrador: se entrega una contraseña
+    # temporal y se exige el cambio en el próximo ingreso (igual que en el alta).
+    login_url = f"{settings.FRONTEND_BASE_URL}/login"
+
+    content_html = f"""
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+             style="margin: 16px 0; background-color: {_PAGE_BG};
+                    border: 1px solid {_BORDER_COLOR}; border-radius: 8px;">
+        <tr>
+          <td style="padding: 16px 20px; font-size: 15px; line-height: 26px;">
+            <strong>Correo:</strong> {escape(email)}<br />
+            <strong>Contraseña temporal:</strong>
+            <span style="font-family: 'Courier New', monospace; font-size: 16px;
+                         color: {_BRAND_RED};">{escape(temporary_password)}</span>
+          </td>
+        </tr>
+      </table>
+      <p style="margin: 0;">Por seguridad, deberás cambiar esta contraseña la
+      próxima vez que inicies sesión.</p>
+    """
+
+    return render_email(
+        title="Restablecimiento de contraseña",
+        intro=(
+            f"Hola {first_name}, un administrador restableció la contraseña de tu "
+            "cuenta en la plataforma de CAS. Estas son tus credenciales de acceso "
+            "temporales:"
+        ),
+        content_html=content_html,
+        cta_label="Iniciar sesión",
+        cta_url=login_url,
+    )
+
+
 def build_password_reset_email(first_name: str, token: str) -> str:
     reset_url = f"{settings.FRONTEND_BASE_URL}/password-reset/confirm?token={token}"
 

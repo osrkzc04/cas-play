@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Pencil, Power, PowerOff } from "lucide-react";
+import { KeyRound, Pencil, Power, PowerOff } from "lucide-react";
 
 import { Alert } from "@/shared/components/Alert";
 import { Badge } from "@/shared/components/Badge";
@@ -13,6 +13,7 @@ import { PageLoader } from "@/shared/components/PageLoader";
 import { getApiErrorMessage } from "@/shared/lib/errors";
 import { getRoleLabel } from "@/shared/auth/roles";
 import {
+  useResetUserPassword,
   useRoles,
   useSetUserActive,
   useUsers,
@@ -28,11 +29,16 @@ export function UsersListPage() {
     id: string;
     name: string;
   } | null>(null);
+  const [toReset, setToReset] = useState<{ id: string; name: string } | null>(
+    null,
+  );
+  const [resetMessage, setResetMessage] = useState<string | null>(null);
   const skip = (page - 1) * PAGE_SIZE;
 
   const { data: users, isLoading, isError, error } = useUsers(skip, PAGE_SIZE);
   const { data: roles } = useRoles();
   const setActive = useSetUserActive();
+  const resetPassword = useResetUserPassword();
 
   const roleNameById = useMemo(() => {
     const map = new Map<string, string>();
@@ -57,6 +63,12 @@ export function UsersListPage() {
       {setActive.isError && (
         <Alert tone="error">{getApiErrorMessage(setActive.error)}</Alert>
       )}
+
+      {resetPassword.isError && (
+        <Alert tone="error">{getApiErrorMessage(resetPassword.error)}</Alert>
+      )}
+
+      {resetMessage && <Alert tone="success">{resetMessage}</Alert>}
 
       {isLoading && <PageLoader />}
 
@@ -102,6 +114,19 @@ export function UsersListPage() {
                             label: "Editar",
                             icon: Pencil,
                             to: `/dashboard/users/${user.id}/edit`,
+                          },
+                          {
+                            key: "reset-password",
+                            label: "Restablecer contraseña",
+                            icon: KeyRound,
+                            loading:
+                              resetPassword.isPending &&
+                              resetPassword.variables === user.id,
+                            onSelect: () =>
+                              setToReset({
+                                id: user.id,
+                                name: `${user.first_name} ${user.last_name}`,
+                              }),
                           },
                           {
                             key: "toggle",
@@ -168,6 +193,28 @@ export function UsersListPage() {
           }
         }}
         onClose={() => setToDeactivate(null)}
+      />
+
+      <ConfirmDialog
+        open={toReset !== null}
+        title="Restablecer contraseña"
+        message={`Se generará una contraseña temporal para ${toReset?.name}, se enviará a su correo y deberá cambiarla en el próximo ingreso. Sus sesiones activas se cerrarán. ¿Continuar?`}
+        confirmLabel="Restablecer"
+        isLoading={resetPassword.isPending}
+        onConfirm={() => {
+          if (toReset) {
+            const name = toReset.name;
+            resetPassword.mutate(toReset.id, {
+              onSuccess: () => {
+                setResetMessage(
+                  `Contraseña de ${name} restablecida. Se envió un correo con las credenciales temporales.`,
+                );
+                setToReset(null);
+              },
+            });
+          }
+        }}
+        onClose={() => setToReset(null)}
       />
     </section>
   );

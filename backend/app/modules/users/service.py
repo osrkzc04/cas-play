@@ -2,7 +2,11 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from app.core.email import build_welcome_email, send_email
+from app.core.email import (
+    build_admin_password_reset_email,
+    build_welcome_email,
+    send_email,
+)
 from app.core.exceptions import (
     BadRequestException,
     ConflictException,
@@ -10,6 +14,7 @@ from app.core.exceptions import (
 )
 from app.core.security import generate_temporary_password, get_password_hash
 from app.modules.audit.service import AuditService
+from app.modules.auth.repository import RefreshTokenRepository
 from app.modules.users.models import Role, User
 from app.modules.users.repository import RoleRepository, UserRepository
 from app.modules.users.schemas import RoleCreate, UserCreate, UserUpdate
@@ -44,6 +49,7 @@ class UserService:
     def __init__(self, db: Session):
         self.user_repository = UserRepository(db)
         self.role_repository = RoleRepository(db)
+        self.refresh_token_repository = RefreshTokenRepository(db)
         self.audit = AuditService(db)
 
     def get_users(self, skip: int = 0, limit: int = 10) -> list[User]:
@@ -195,3 +201,37 @@ class UserService:
         )
 
         return updated_user
+
+    def reset_password(self, user_id: uuid.UUID, actor: User | None = None) -> User:
+        # Restablecimiento por administrador: asigna una contraseña temporal,
+        # exige el cambio en el próximo ingreso y notifica por correo, igual que
+        # en el alta (BR-037). Se revocan las sesiones activas para forzar el
+        # reingreso con las nuevas credenciales.
+        user = self.get_user_by_id(user_id)
+
+        temporary_password = generate_temporary_password()
+        user.password_hash = get_password_hash(temporary_password)
+        user.must_change_password = True
+        user = self.user_repository.save(user)
+
+        self.refresh_token_repository.revoke_all_by_user_id(user.id)
+
+        send_email(
+            to=user.email,
+            subject="Restablecimiento de contraseña · Culinary Arts School",
+            html_body=build_admin_password_reset_email(
+                first_name=user.first_name,
+                email=user.email,
+                temporary_password=temporary_password,
+            ),
+        )
+
+        self.audit.record(
+            action=AuditAction.PASSWORD_CHANGED,
+            actor_id=actor.id if actor else None,
+            entity_type="user",
+            entity_id=user.id,
+            details={"email": user.email, "reason": "admin_reset"},
+        )
+
+        return user

@@ -101,3 +101,11 @@ class UserRepository:
         self.db.refresh(user)
 
         return user
+
+    def save(self, user: User) -> User:
+        # Persiste cambios directos sobre la entidad (p. ej. restablecer la
+        # contraseña), sin pasar por el schema de actualización.
+        self.db.commit()
+        self.db.refresh(user)
+
+        return user

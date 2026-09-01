@@ -13,6 +13,7 @@ export const endpoints = {
     create: "/users",
     detail: (id: string) => `/users/${id}`,
     update: (id: string) => `/users/${id}`,
+    resetPassword: (id: string) => `/users/${id}/reset-password`,
     roles: "/users/roles",
   },
   instructorProfile: {
