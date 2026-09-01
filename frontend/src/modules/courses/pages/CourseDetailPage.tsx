@@ -110,6 +110,13 @@ export function CourseDetailPage() {
 
   const infoTopics = course.topics;
 
+  // La vista previa "como estudiante" es una herramienta del gestor del curso:
+  // solo el ADMIN o el instructor propietario pueden abrirla (evita el 403 al
+  // volver al builder de un curso ajeno).
+  const managesCourse =
+    role === "ADMIN" ||
+    (role === "INSTRUCTOR" && course.instructor_id === user?.id);
+
   return (
     <article className="grid gap-8 lg:grid-cols-3">
       <div className="space-y-6 lg:col-span-2">
@@ -334,15 +341,17 @@ export function CourseDetailPage() {
                 Vista previa del curso. La inscripción está disponible para
                 estudiantes.
               </p>
-              <Link
-                to={`/dashboard/courses/${course.id}/preview`}
-                className="block"
-              >
-                <Button variant="outline" className="w-full">
-                  <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
-                  Ver como estudiante
-                </Button>
-              </Link>
+              {managesCourse && (
+                <Link
+                  to={`/dashboard/courses/${course.id}/preview`}
+                  className="block"
+                >
+                  <Button variant="outline" className="w-full">
+                    <Eye className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Ver como estudiante
+                  </Button>
+                </Link>
+              )}
             </>
           )}
 
