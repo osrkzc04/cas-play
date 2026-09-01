@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.modules.courses.dependencies import require_course_manager
 from app.modules.courses.schemas import (
+    CourseCatalogResponse,
     CourseCreate,
     CourseDetailResponse,
     CourseResponse,
@@ -41,7 +42,7 @@ def create_course(
 
 @router.get(
     "",
-    response_model=PaginatedResponse[CourseResponse],
+    response_model=PaginatedResponse[CourseCatalogResponse],
 )
 def list_published_courses(
     page: int = Query(1, ge=1),

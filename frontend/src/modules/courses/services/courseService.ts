@@ -3,6 +3,7 @@ import { endpoints } from "@/shared/api/endpoints";
 import type { Paginated } from "@/shared/types/pagination";
 import type {
   Course,
+  CourseCatalogItem,
   CourseDetail,
   CourseStatus,
   CourseStatusAction,
@@ -30,8 +31,10 @@ const statusActionEndpoint: Record<CourseStatusAction, (id: string) => string> =
   };
 
 export const courseService = {
-  async getCatalog(params: CatalogParams): Promise<Paginated<Course>> {
-    const { data } = await axiosClient.get<Paginated<Course>>(
+  async getCatalog(
+    params: CatalogParams,
+  ): Promise<Paginated<CourseCatalogItem>> {
+    const { data } = await axiosClient.get<Paginated<CourseCatalogItem>>(
       endpoints.courses.catalog,
       { params },
     );

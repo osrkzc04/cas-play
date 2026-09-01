@@ -29,6 +29,15 @@ export interface Course {
   updated_at: string;
 }
 
+// Ítem del catálogo: el curso más los agregados que muestran las tarjetas
+// (instructor, inscritos y resumen de valoraciones).
+export interface CourseCatalogItem extends Course {
+  instructor_name: string | null;
+  enrolled_count: number;
+  rating_average: number | null;
+  rating_count: number;
+}
+
 export interface CourseDetail extends Course {
   topics: CourseTopic[];
   instructor: InstructorPublic | null;

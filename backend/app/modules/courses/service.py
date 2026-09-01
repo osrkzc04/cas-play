@@ -15,7 +15,13 @@ from app.modules.audit.service import AuditService
 from app.modules.courses.models import Course
 from app.modules.instructor_profiles.service import InstructorProfileService
 from app.modules.courses.repository import CourseRepository
-from app.modules.courses.schemas import CourseCreate, CourseUpdate
+from app.modules.courses.schemas import (
+    CourseCatalogResponse,
+    CourseCreate,
+    CourseUpdate,
+)
+from app.modules.enrollments.repository import EnrollmentRepository
+from app.modules.ratings.repository import RatingRepository
 from app.modules.users.models import User
 from app.modules.users.repository import UserRepository
 from app.shared.enums import AuditAction, CourseStatus, RoleName
@@ -38,6 +44,8 @@ class CourseService:
     def __init__(self, db: Session):
         self.course_repository = CourseRepository(db)
         self.user_repository = UserRepository(db)
+        self.enrollment_repository = EnrollmentRepository(db)
+        self.rating_repository = RatingRepository(db)
         self.audit = AuditService(db)
 
     def _is_admin(self, user: User) -> bool:
@@ -266,8 +274,32 @@ class CourseService:
 
     def list_published(self, page: int, size: int) -> PaginatedResponse:
         skip = (page - 1) * size
-        items = self.course_repository.list_published(skip=skip, limit=size)
+        courses = self.course_repository.list_published(skip=skip, limit=size)
         total = self.course_repository.count_published()
+
+        course_ids = [course.id for course in courses]
+        enrolled_counts = self.enrollment_repository.counts_by_courses(course_ids)
+        rating_aggregates = self.rating_repository.aggregates_by_courses(course_ids)
+
+        items: list[CourseCatalogResponse] = []
+        for course in courses:
+            average, rating_count = rating_aggregates.get(course.id, (None, 0))
+            instructor = course.instructor
+            instructor_name = (
+                f"{instructor.first_name} {instructor.last_name}".strip()
+                if instructor is not None
+                else None
+            )
+            items.append(
+                CourseCatalogResponse.model_validate(course).model_copy(
+                    update={
+                        "instructor_name": instructor_name or None,
+                        "enrolled_count": enrolled_counts.get(course.id, 0),
+                        "rating_average": average,
+                        "rating_count": rating_count,
+                    }
+                )
+            )
 
         return PaginatedResponse(
             items=items,

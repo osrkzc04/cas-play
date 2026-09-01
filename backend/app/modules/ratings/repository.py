@@ -78,6 +78,29 @@ class RatingRepository:
         average = self.db.scalar(statement)
         return float(average) if average is not None else None
 
+    def aggregates_by_courses(
+        self,
+        course_ids: list[uuid.UUID],
+    ) -> dict[uuid.UUID, tuple[float | None, int]]:
+        # Promedio y cantidad de valoraciones por curso en una sola consulta,
+        # para alimentar el catálogo sin incurrir en N+1.
+        if not course_ids:
+            return {}
+
+        statement = (
+            select(
+                Rating.course_id,
+                func.avg(Rating.score),
+                func.count(),
+            )
+            .where(Rating.course_id.in_(course_ids))
+            .group_by(Rating.course_id)
+        )
+        return {
+            course_id: (float(average) if average is not None else None, count)
+            for course_id, average, count in self.db.execute(statement).all()
+        }
+
     def list_all(
         self,
         course_id: uuid.UUID | None,

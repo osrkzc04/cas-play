@@ -97,3 +97,21 @@ class EnrollmentRepository:
             statement = statement.where(Enrollment.course_id == course_id)
 
         return self.db.scalar(statement) or 0
+
+    def counts_by_courses(
+        self,
+        course_ids: list[uuid.UUID],
+    ) -> dict[uuid.UUID, int]:
+        # Total de inscritos por curso en una sola consulta (catálogo sin N+1).
+        if not course_ids:
+            return {}
+
+        statement = (
+            select(Enrollment.course_id, func.count())
+            .where(Enrollment.course_id.in_(course_ids))
+            .group_by(Enrollment.course_id)
+        )
+        return {
+            course_id: count
+            for course_id, count in self.db.execute(statement).all()
+        }

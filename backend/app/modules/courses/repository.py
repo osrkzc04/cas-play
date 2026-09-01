@@ -1,7 +1,7 @@
 import uuid
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.modules.courses.models import Course
 from app.shared.enums import CourseStatus
@@ -40,6 +40,9 @@ class CourseRepository:
         statement = (
             select(Course)
             .where(Course.status == CourseStatus.PUBLISHED)
+            # Carga anticipada del instructor: el catálogo muestra su nombre y
+            # así se evita una consulta por curso (N+1).
+            .options(joinedload(Course.instructor))
             .order_by(Course.created_at.asc())
             .offset(skip)
             .limit(limit)

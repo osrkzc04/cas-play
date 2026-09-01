@@ -61,6 +61,15 @@ class CourseResponse(CourseBase):
         )
 
 
+class CourseCatalogResponse(CourseResponse):
+    # Datos agregados para las tarjetas del catálogo: nombre del instructor,
+    # total de inscritos y resumen de valoraciones. Se arman en el service.
+    instructor_name: str | None = None
+    enrolled_count: int = 0
+    rating_average: float | None = None
+    rating_count: int = 0
+
+
 class CourseDetailResponse(CourseResponse):
     # Incluye el temario informativo para la página de detalle.
     topics: list[CourseTopicResponse] = Field(default_factory=list)
