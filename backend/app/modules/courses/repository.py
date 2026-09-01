@@ -35,10 +35,12 @@ class CourseRepository:
         return course
 
     def list_published(self, skip: int, limit: int) -> list[Course]:
+        # El catálogo ordena por antigüedad: el primer curso creado encabeza la
+        # lista (orden estable para la demostración).
         statement = (
             select(Course)
             .where(Course.status == CourseStatus.PUBLISHED)
-            .order_by(Course.created_at.desc())
+            .order_by(Course.created_at.asc())
             .offset(skip)
             .limit(limit)
         )
