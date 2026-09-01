@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { CheckCircle2, Circle, FileText, PlayCircle } from "lucide-react";
+import { CheckCircle2, Circle, FileText, Lock, PlayCircle } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
 import type {
@@ -17,6 +17,8 @@ interface CurriculumSidebarProps {
   lessonBasePath?: string;
   // La vista previa del staff no incluye el intento de evaluación final.
   hideExam?: boolean;
+  // La evaluación final se bloquea hasta completar el 100% del contenido (BR-042).
+  examLocked?: boolean;
 }
 
 export function CurriculumSidebar({
@@ -27,6 +29,7 @@ export function CurriculumSidebar({
   completedLessonIds,
   lessonBasePath = `/courses/${courseId}/learn`,
   hideExam = false,
+  examLocked = false,
 }: CurriculumSidebarProps) {
   return (
     <nav className="space-y-5">
@@ -79,16 +82,27 @@ export function CurriculumSidebar({
 
       {finalEvaluation && !hideExam && (
         <div className="border-t border-gray-200 pt-4">
-          <Link
-            to={`/courses/${courseId}/exam`}
-            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
-          >
-            <FileText
-              className="h-4 w-4 shrink-0 text-gold-500"
-              aria-hidden="true"
-            />
-            <span>Evaluación final del curso</span>
-          </Link>
+          {examLocked ? (
+            <div
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-400"
+              aria-disabled="true"
+              title="Completa el 100% del contenido para habilitar la evaluación final"
+            >
+              <Lock className="h-4 w-4 shrink-0" aria-hidden="true" />
+              <span>Evaluación final del curso</span>
+            </div>
+          ) : (
+            <Link
+              to={`/courses/${courseId}/exam`}
+              className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50"
+            >
+              <FileText
+                className="h-4 w-4 shrink-0 text-gold-500"
+                aria-hidden="true"
+              />
+              <span>Evaluación final del curso</span>
+            </Link>
+          )}
         </div>
       )}
     </nav>

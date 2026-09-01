@@ -326,6 +326,7 @@ export function LearnPage({ preview = false }: LearnPageProps = {}) {
               completedLessonIds={completedLessonIds}
               lessonBasePath={lessonBasePath}
               hideExam={preview}
+              examLocked={percentage < 100}
             />
           </aside>
         )}

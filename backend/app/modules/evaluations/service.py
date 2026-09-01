@@ -12,6 +12,8 @@ from app.core.exceptions import (
 )
 from app.modules.courses.service import CourseService
 from app.modules.enrollments.repository import EnrollmentRepository
+from app.modules.lessons.repository import LessonRepository
+from app.modules.progress.repository import ProgressRepository
 from app.modules.evaluations.models import (
     AttemptAnswer,
     Evaluation,
@@ -55,6 +57,8 @@ class EvaluationService:
         self.question_repository = QuestionRepository(db)
         self.attempt_repository = AttemptRepository(db)
         self.enrollment_repository = EnrollmentRepository(db)
+        self.lesson_repository = LessonRepository(db)
+        self.progress_repository = ProgressRepository(db)
         # Reutiliza el control de propiedad/rol sobre el curso.
         self.course_service = CourseService(db)
 
@@ -345,7 +349,9 @@ class EvaluationService:
         evaluation_id: uuid.UUID,
         current_user: User,
     ) -> AttemptDetailResponse:
-        self._resolve_evaluation_for_student(evaluation_id, current_user)
+        evaluation = self._resolve_evaluation_for_student(
+            evaluation_id, current_user
+        )
 
         # Un intento en curso se reanuda en lugar de consumir un intento nuevo.
         in_progress = self.attempt_repository.get_in_progress(
@@ -354,6 +360,20 @@ class EvaluationService:
         )
         if in_progress is not None:
             return self._build_attempt_detail(in_progress)
+
+        # Solo se habilita la evaluación final tras completar el 100% del
+        # contenido del curso (BR-042). No aplica al reanudar un intento ya
+        # abierto (arriba), donde la compleción ya se validó al iniciarlo.
+        total_lessons = self.lesson_repository.count_by_course(evaluation.course_id)
+        completed_lessons = self.progress_repository.count_completed_by_course(
+            current_user.id,
+            evaluation.course_id,
+        )
+        if total_lessons > 0 and completed_lessons < total_lessons:
+            raise BadRequestException(
+                "Debes completar el 100% del contenido del curso antes de "
+                "rendir la evaluación final"
+            )
 
         bank_size = self.evaluation_repository.count_questions(evaluation_id)
         if bank_size < self.REQUIRED_BANK_SIZE:

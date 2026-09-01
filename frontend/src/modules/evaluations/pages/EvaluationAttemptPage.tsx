@@ -13,6 +13,7 @@ import {
 } from "@/shared/components";
 import { getApiErrorMessage } from "@/shared/lib/errors";
 import { useCurriculum } from "@/modules/curriculum/hooks/useCurriculum";
+import { useCourseProgress } from "@/modules/learning/hooks/useProgress";
 import { AttemptQuestionCard } from "../components/AttemptQuestionCard";
 import {
   useMyAttempts,
@@ -40,6 +41,10 @@ export function EvaluationAttemptPage() {
   const evaluation = curriculumQuery.data?.final_evaluation ?? null;
   const evaluationId = evaluation?.id;
 
+  const progressQuery = useCourseProgress(courseId);
+  const contentPercentage = progressQuery.data?.percentage ?? 0;
+  const contentCompleted = contentPercentage >= 100;
+
   const attemptsQuery = useMyAttempts(evaluationId);
   const startAttempt = useStartAttempt(evaluationId ?? "");
   const submitAttempt = useSubmitAttempt(evaluationId ?? "");
@@ -55,14 +60,20 @@ export function EvaluationAttemptPage() {
   const usedAttempts = previousAttempts.length;
   const hasPassed = previousAttempts.some((a) => a.passed);
   const remaining = Math.max(0, MAX_ATTEMPTS - usedAttempts);
-  // Reanudar siempre es posible aunque ya no queden intentos disponibles.
-  const canStart = !hasPassed && (hasInProgress || remaining > 0);
+  // Un intento nuevo exige haber completado el 100% del contenido (BR-042);
+  // reanudar un intento en curso siempre es posible aunque ya no queden intentos.
+  const canStart =
+    !hasPassed && (hasInProgress || (remaining > 0 && contentCompleted));
 
   const backLink = `/courses/${courseId}/learn/${
     curriculumQuery.data?.modules[0]?.lessons[0]?.id ?? ""
   }`;
 
-  if (curriculumQuery.isLoading || attemptsQuery.isLoading) {
+  if (
+    curriculumQuery.isLoading ||
+    attemptsQuery.isLoading ||
+    progressQuery.isLoading
+  ) {
     return <PageLoader />;
   }
 
@@ -206,6 +217,12 @@ export function EvaluationAttemptPage() {
           {!hasPassed && !hasInProgress && remaining === 0 && (
             <Alert tone="warning">
               Has agotado tus {MAX_ATTEMPTS} intentos para esta evaluación.
+            </Alert>
+          )}
+          {!hasPassed && !hasInProgress && remaining > 0 && !contentCompleted && (
+            <Alert tone="warning">
+              Debes completar el 100% del contenido del curso antes de rendir la
+              evaluación final. Avance actual: {Math.round(contentPercentage)}%.
             </Alert>
           )}
           {!evaluation?.is_ready && (
