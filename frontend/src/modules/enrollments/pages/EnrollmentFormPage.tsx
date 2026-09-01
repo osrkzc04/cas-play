@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -19,13 +19,13 @@ import { useCreateAdminEnrollment } from "../hooks/useEnrollments";
 import type { AdminEnrollmentResult, UserLookup } from "../types";
 
 export function EnrollmentFormPage() {
+  const navigate = useNavigate();
   const coursesQuery = useManagedCourses(1, 100, "PUBLISHED");
   const createEnrollment = useCreateAdminEnrollment();
 
   const [lookup, setLookup] = useState<UserLookup | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupError, setLookupError] = useState<string | null>(null);
-  const [result, setResult] = useState<AdminEnrollmentResult | null>(null);
 
   const {
     register,
@@ -50,7 +50,6 @@ export function EnrollmentFormPage() {
 
     setLookupLoading(true);
     setLookupError(null);
-    setResult(null);
 
     try {
       setLookup(await enrollmentService.lookupUser(email));
@@ -88,7 +87,14 @@ export function EnrollmentFormPage() {
         last_name: isNewUser ? values.last_name : undefined,
       },
       {
-        onSuccess: (data) => setResult(data),
+        // Tras matricular se vuelve al listado; el aviso viaja por el state de
+        // navegación para mostrarse una sola vez sobre la lista actualizada.
+        onSuccess: (data: AdminEnrollmentResult) => {
+          const message = data.user_created
+            ? "Matrícula registrada. Se creó el usuario y se envió un correo con las credenciales de acceso temporales."
+            : "Matrícula registrada correctamente.";
+          navigate("/dashboard/enrollments", { state: { flash: message } });
+        },
       },
     );
   };
@@ -109,15 +115,6 @@ export function EnrollmentFormPage() {
         </Link>
       </header>
 
-      {result && (
-        <Alert tone="success">
-          Matrícula registrada correctamente.
-          {result.user_created
-            ? " Se creó el usuario y se envió un correo con las credenciales de acceso temporales."
-            : ""}
-        </Alert>
-      )}
-
       {createEnrollment.isError && (
         <Alert tone="error">{getApiErrorMessage(createEnrollment.error)}</Alert>
       )}
@@ -135,10 +132,7 @@ export function EnrollmentFormPage() {
                 type="email"
                 error={errors.email?.message}
                 {...register("email", {
-                  onChange: () => {
-                    setLookup(null);
-                    setResult(null);
-                  },
+                  onChange: () => setLookup(null),
                 })}
               />
             </div>

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 import { Alert } from "@/shared/components/Alert";
 import { Button } from "@/shared/components/Button";
@@ -13,6 +13,21 @@ const PAGE_SIZE = 10;
 
 export function EnrollmentsListPage() {
   const [page, setPage] = useState(1);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Aviso de éxito enviado por el formulario de matrícula al volver al listado.
+  // Se guarda en estado local y se limpia del historial para que no reaparezca
+  // al recargar o al navegar hacia atrás.
+  const [flash] = useState<string | null>(
+    (location.state as { flash?: string } | null)?.flash ?? null,
+  );
+
+  useEffect(() => {
+    if ((location.state as { flash?: string } | null)?.flash) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   const { data, isLoading, isError, error } = useAdminEnrollments(
     page,
@@ -34,6 +49,8 @@ export function EnrollmentsListPage() {
           <Button>Nueva matrícula</Button>
         </Link>
       </header>
+
+      {flash && <Alert tone="success">{flash}</Alert>}
 
       {isLoading && <PageLoader />}
 
