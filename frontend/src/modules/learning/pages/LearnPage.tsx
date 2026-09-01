@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
+  Award,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Download,
   Eye,
   Maximize2,
   Minimize2,
@@ -23,7 +25,10 @@ import { getApiErrorMessage } from "@/shared/lib/errors";
 import { useAuth } from "@/shared/auth/useAuth";
 import { useCurriculum } from "@/modules/curriculum/hooks/useCurriculum";
 import { useCourse } from "@/modules/courses/hooks/useCourses";
-import { useCertificateEligibility } from "@/modules/certificates/hooks/useCertificates";
+import {
+  useCertificateEligibility,
+  useIssueCertificate,
+} from "@/modules/certificates/hooks/useCertificates";
 import { isCourseFinished } from "@/modules/certificates/types";
 import { CurriculumSidebar } from "../components/CurriculumSidebar";
 import { LessonMaterials } from "../components/LessonMaterials";
@@ -74,6 +79,8 @@ export function LearnPage({ preview = false }: LearnPageProps = {}) {
 
   const saveLastSecond = useSaveLastSecond();
   const completeLesson = useCompleteLesson(courseId ?? "");
+  const issueCertificate = useIssueCertificate(courseId ?? "");
+  const certificateIssued = eligibilityQuery.data?.already_issued ?? false;
 
   const modules = useMemo(
     () => curriculumQuery.data?.modules ?? [],
@@ -204,8 +211,34 @@ export function LearnPage({ preview = false }: LearnPageProps = {}) {
           )}
           {!preview && isFinished && (
             <Alert tone="success">
-              ¡Felicitaciones! Completaste el contenido y aprobaste la
-              evaluación final de este curso.
+              <div className="space-y-3">
+                <p>
+                  ¡Felicitaciones! Completaste el contenido y aprobaste la
+                  evaluación final de este curso.
+                </p>
+                {certificateIssued ? (
+                  <Link to="/dashboard/certificates" className="inline-block">
+                    <Button size="sm">
+                      <Download className="mr-2 h-4 w-4" aria-hidden="true" />
+                      Descargar mi certificado
+                    </Button>
+                  </Link>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() => issueCertificate.mutate()}
+                    isLoading={issueCertificate.isPending}
+                  >
+                    <Award className="mr-2 h-4 w-4" aria-hidden="true" />
+                    Emitir mi certificado
+                  </Button>
+                )}
+                {issueCertificate.isError && (
+                  <p className="text-sm text-brand-700">
+                    {getApiErrorMessage(issueCertificate.error)}
+                  </p>
+                )}
+              </div>
             </Alert>
           )}
           <div className="relative">
