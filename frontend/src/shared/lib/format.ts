@@ -1,10 +1,14 @@
+// Las fechas se muestran en la zona horaria de Ecuador (UTC-5) para que
+// coincidan con la fecha impresa en el certificado (generada en el backend con
+// la misma zona), independientemente de la zona del navegador del visitante.
 const dateFormatter = new Intl.DateTimeFormat("es-EC", {
   day: "2-digit",
   month: "short",
   year: "numeric",
+  timeZone: "America/Guayaquil",
 });
 
-// Backend stores timestamps in UTC; Intl renders them in the user's locale.
+// Backend stores timestamps in UTC; Intl renders them in Ecuador's timezone.
 export function formatDate(isoDate: string): string {
   const date = new Date(isoDate);
   if (Number.isNaN(date.getTime())) {

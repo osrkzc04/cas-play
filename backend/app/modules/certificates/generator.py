@@ -1,7 +1,7 @@
 import io
 import math
 import uuid
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import segno
@@ -40,6 +40,11 @@ _MONTHS_ES = [
     "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ]
 
+# La fecha del certificado se expresa en la zona horaria de Ecuador (UTC-5, sin
+# horario de verano). El instante se guarda en UTC; se usa un offset fijo para
+# no depender de la base de datos de zonas horarias (tzdata) del entorno.
+_EC_TZ = timezone(timedelta(hours=-5))
+
 
 def generate_code() -> str:
     raw = uuid.uuid4().hex[:12].upper()
@@ -47,7 +52,11 @@ def generate_code() -> str:
 
 
 def _format_date_es(value: datetime) -> str:
-    return f"{value.day} de {_MONTHS_ES[value.month - 1]} de {value.year}"
+    # Un valor sin tzinfo se asume en UTC (así lo persiste el servicio).
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=timezone.utc)
+    local = value.astimezone(_EC_TZ)
+    return f"{local.day} de {_MONTHS_ES[local.month - 1]} de {local.year}"
 
 
 def _verification_url(code: str) -> str:
