@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Briefcase, Camera, Video } from "lucide-react";
@@ -14,17 +15,23 @@ import {
 interface ProfileFormProps {
   defaultValues?: Partial<InstructorProfileFormValues>;
   isSubmitting?: boolean;
+  // Al guardarse con éxito, el formulario se "limpia" (isDirty -> false) para
+  // que el guardián de cambios sin guardar no se dispare al navegar.
+  saveSucceeded?: boolean;
   onSubmit: (values: InstructorProfileFormValues) => void;
 }
 
 export function ProfileForm({
   defaultValues,
   isSubmitting = false,
+  saveSucceeded = false,
   onSubmit,
 }: ProfileFormProps) {
   const {
     register,
     handleSubmit,
+    reset,
+    getValues,
     formState: { errors, isDirty },
   } = useForm<InstructorProfileFormValues>({
     resolver: zodResolver(instructorProfileSchema),
@@ -37,6 +44,14 @@ export function ProfileForm({
       youtube: defaultValues?.youtube ?? "",
     },
   });
+
+  // Reancla los valores por defecto a los recién guardados: isDirty vuelve a
+  // false sin alterar lo que ve el usuario.
+  useEffect(() => {
+    if (saveSucceeded) {
+      reset(getValues());
+    }
+  }, [saveSucceeded, reset, getValues]);
 
   return (
     <form

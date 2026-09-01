@@ -93,6 +93,7 @@ export function InstructorProfilePage() {
               youtube: profile.social_links?.youtube ?? "",
             }}
             isSubmitting={updateProfile.isPending}
+            saveSucceeded={updateProfile.isSuccess}
             onSubmit={handleSubmit}
           />
         </div>
